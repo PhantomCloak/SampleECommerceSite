@@ -38,6 +38,7 @@ namespace EFurni.Presentation.Clients
             var reviewRequest = new RestRequest(ApiRoutes.ProductReview.Create, Method.POST);
             reviewRequest.AddParameter("Authorization",await _authenticationClient.AuthenticationToken(),ParameterType.HttpHeader);
             reviewRequest.AddParameter("productId", productId,ParameterType.UrlSegment);
+            
             reviewRequest.AddParameter("ReviewText", desc, ParameterType.QueryString);
             reviewRequest.AddParameter("Rating",rating, ParameterType.QueryString);
 

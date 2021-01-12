@@ -37,7 +37,7 @@ namespace EFurni.Core.Controllers.V1
 
         [Authorize(Roles = "Trusted")]
         [HttpPost(ApiRoutes.ProductReview.Create)]
-        public async Task<IActionResult> CreateReview(int productId,CreateProductReviewQuery createQuery)
+        public async Task<IActionResult> CreateReview(int productId,[FromQuery] CreateProductReviewQuery createQuery)
         {
             int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier).Value,out var senderAccountId);
 
