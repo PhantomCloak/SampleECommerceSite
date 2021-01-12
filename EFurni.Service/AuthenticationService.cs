@@ -49,7 +49,7 @@ namespace EFurni.Services
                 Account = newAccount,
                 FirstName = registerQuery.FirstName,
                 LastName = registerQuery.LastName,
-                ProfilePictureUrl = "https://media.discordapp.net/attachments/263722271556894720/796456288988037190/unknown.png",
+                ProfilePictureUrl = "https://e7.pngegg.com/pngimages/109/994/png-clipart-teacher-student-college-school-education-avatars-child-face-thumbnail.png",
                 PhoneNumber = registerQuery.PhoneNumber,
             });
 
