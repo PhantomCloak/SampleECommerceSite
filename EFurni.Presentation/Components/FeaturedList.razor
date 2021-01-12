@@ -1,0 +1,87 @@
+@using EFurni.Contract.V1
+@using EFurni.Contract.V1.Queries
+@using EFurni.Contract.V1.Responses
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Presentation.Extensions
+@using EFurni.Shared.DTOs
+@using Microsoft.Extensions.Configuration
+@using RestSharp
+@namespace EFurni.Presentation.Components.Home
+@inject IConfiguration Configuration;
+@inject IProductClient ProductClient;
+<section class="feature_part padding_top" style="background-color: #f5f5f7 !important">
+    <div class="container">
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="section_tittle text-center">
+            <h2 class="semi-bold-font-text">Featured Category</h2>
+        </div>
+    </div>
+</div>
+<div class="row align-items-center justify-content-between ">
+    <div class="col-lg-7 col-sm-6">
+        <div class="single_feature_post_text">
+            <p>Premium Quality</p>
+            <h3 class="semi-bold-font-text">Chairs</h3>
+            <a href="/categories?initialPage=chair" class="feature_btn">EXPLORE NOW <i class="fas fa-play"></i></a>
+            <div class="img-hover-zoom-lt">
+                <img alt="" src="https://d3vmktulshtd50.cloudfront.net/cl/VIT_CDWNB8/furnitureServerScreenshotAPI/TBW34AMKWGLGSRYW.png" width="344" height="371">
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 col-sm-6">
+        <div class="single_feature_post_text">
+            <p>Premium Quality</p>
+            <h3 class="semi-bold-font-text">Tables</h3>
+            <a href="/categories?initialPage=table" class="feature_btn">EXPLORE NOW <i class="fas fa-play"></i></a>
+            <div class="img-hover-zoom-lt">
+                <img alt="" src="https://images-na.ssl-images-amazon.com/images/I/41xcIWKWxPL._AC_SY450_.jpg" style="border-top-width: 0px;border-top-style: solid;margin-bottom: 30px;" width="210" height="290">
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5 col-sm-6">
+        <div class="single_feature_post_text">
+            <p>Premium Quality</p>
+            <h3 class="semi-bold-font-text">New Designs</h3>
+            <a href="/categories?initialPage=new" class="feature_btn">EXPLORE NOW <i class="fas fa-play"></i></a>
+            <div class="img-hover-zoom-lt">
+                <img src="img/feature/feature_3.png" class="pb-5" alt="">
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7 col-sm-6">
+        <div class="single_feature_post_text">
+            <p>Premium Quality</p>
+            <h3 class="semi-bold-font-text">Sofas</h3>
+            <a href="/categories?initialPage=sofa" class="feature_btn">EXPLORE NOW <i class="fas fa-play"></i></a>
+
+            <div class="img-hover-zoom-lt">
+                <img src="https://cdn.discordapp.com/attachments/261911628637929472/793310934470098964/79ed5c13c9ba14c9c07aa65363b59ddc.png" width="530">
+            </div>
+        </div>
+    </div>
+</div>
+    </div>  
+</section>
+@code{
+    private List<ProductDto> featuredProducts = new List<ProductDto>();
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        await LoadProducts();
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    private async Task LoadProducts()
+    {
+        var products = await ProductClient.GetProductsAsync(new ProductFilterQuery()
+        {
+            Sort = "model_year"
+        }, 4, 1);
+
+        featuredProducts.AddRange(products.Item1);
+        Console.WriteLine();
+    }
+
+}

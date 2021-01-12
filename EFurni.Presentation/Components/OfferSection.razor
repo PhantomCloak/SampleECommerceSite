@@ -1,0 +1,37 @@
+@namespace EFurni.Presentation.Components.Home
+<section class="our_offer section_padding">
+    <div class="container">
+        <div class="row align-items-center justify-content-between rounded-corners" style="background: white;height: 30em;">
+            <div class="col-lg-6">
+                <img class="pretty-image-item-1" src="/img/green-sofa-1.jpg" style="height: 27em" alt="">
+            </div>
+            <div class="col-lg-6">
+                <h1 style="text-align: center" class="semi-bold-font-text">Find a Furniture</h1>
+                <p style="text-align: center;font-size:1.3em" class="regular-text mt-3 sf-pro-text-regular">
+                    Check the type of your furniture and see
+                </p>
+                <p style="text-align: center;font-size:1.3em" class="regular-text mt-2 sf-pro-text-regular">
+                    which products are available.
+                </p>
+                <div style="text-align:center;display:block;" class="mt-4">
+                    <a style="font-size:1.3em;text-decoration: underline;" class="sf-pro-text-regular" href="/categories">List products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<style>
+    .sf-pro-text-regular
+    {
+    font-family: SF Pro Text,SF Pro Icons,AOS Icons,Helvetica Neue,Helvetica,Arial,sans-serif !important;
+    }
+</style>
+
+@code{
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(1000);
+    }
+
+}

@@ -1,0 +1,23 @@
+@page "/track"
+@using EFurni.Presentation.Components
+
+<!doctype html>
+<html lang="zxx">
+
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body>
+<component type="typeof(TrackOrder)" render-mode="ServerPrerendered"/>
+
+</body>
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")
+</html>

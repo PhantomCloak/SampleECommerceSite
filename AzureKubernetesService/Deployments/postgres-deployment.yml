@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql-deployment
+spec:
+  selector:
+    matchLabels:
+      app: postgres-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres-pod
+    spec:
+      containers:
+        - name: postgresql
+          image: efurni.azurecr.io/postgres:latest
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "500m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          azureDisk:
+              kind: Managed
+              diskName: efurniDatabaseDisk
+              diskURI: /subscriptions/<sub-id>/resourceGroups/MC_test-res_efurni-cluster_germanywestcentral/providers/Microsoft.Compute/disks/efurniDatabaseDisk
+

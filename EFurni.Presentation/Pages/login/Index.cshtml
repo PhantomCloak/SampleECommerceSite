@@ -1,0 +1,11 @@
+@page "/login"
+@using EFurni.Presentation.Components.Login
+
+<!doctype html>
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts" />
+}
+    <component type="typeof(LoginPanel)" render-mode="ServerPrerendered"/>
+
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")

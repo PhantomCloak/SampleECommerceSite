@@ -1,0 +1,137 @@
+@using EFurni.Contract.V1
+@using EFurni.Contract.V1.Responses
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Presentation.Extensions
+@using EFurni.Presentation.Extensions.ButtonController
+@using EFurni.Shared.DTOs
+@using Microsoft.Extensions.Configuration
+@using RestSharp
+@namespace EFurni.Presentation.Components.Home
+@inject IConfiguration Configuration;
+@inject NavigationManager NavigationManager;
+@inject IBasketClient BasketClient;
+@inject NotificationService notificationService
+
+<section class="product_list best_seller section_padding" style="background-color: #f5f5f7;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="section_tittle text-center">
+                    <h2>Best Sellers <span>shop</span></h2>
+                </div>
+            </div>
+        </div>
+        <div class="row align-items-center justify-content-between" style="display: flex !important;background-color: #f5f5f7">
+            <div class="col-lg-12">
+                <div class="best_product_slider owl-carousel" style="display: flex">
+                    @for (var index = 1; index < productList.Count + 1; index++)
+                    {
+                        var product = productList[index - 1];
+                        var product_id_str = product.ProductId.ToString();
+
+                        _productButtonController.RegisterButton(product_id_str);
+                        _productButtonController[product_id_str].Add("title", "+ add to cart", "- remove from cart");
+
+                        <div class="col-lg-3 col-sm-6">
+                            <div class="single_product_item rounded-corners" style="display: flex !important;padding: 0px !important;">
+                                <div id=@($"popular-product-{index}") class=@(product.ProductId)>
+                                      <div @onclick="@(() => { NavigationManager.NavigateTo($"/product/{product.ProductId}", true); })" class="pretty-image-container" style="cursor: pointer">
+                                        <img class="pretty-image-item-1" src="@product.ProductImage" style="padding:20px !important;" alt="">
+                                        <img class="pretty-image-item-2" src="https://cdn.discordapp.com/attachments/475376360416739338/792965032840396810/image6.png" height="100%" width="%100" alt=""/>
+                                    </div>
+                                    <div class="single_product_text" style="padding: 0 !important;margin:32px !important;">
+                                        <h4 class="semi-bold-font-text">@product.ProductName.FirstLetterToUpper()</h4>
+                                        <h3 style="color: #646464" class="regular-text">$@Math.Round(product.ListPrice, 2)</h3>
+                                        <a style="cursor: pointer" class="add_cart" @onclick="@(async () => await TriggerBasketButton(product_id_str))">@(_productButtonController[product_id_str].Get("title"))</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code{
+    private List<ProductDto> productList = new List<ProductDto>();
+    private ButtonController _productButtonController = new ButtonController();
+    private RestClient client;
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        client = new RestClient(Configuration["ApiServer:Address"]);
+
+        LoadProducts();
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    private void LoadProducts()
+    {
+        var req = new RestRequest(ApiRoutes.Product.GetAll, Method.GET);
+        req.AddQueryParameter("Sort", "number_sold_desc")
+            .AddQueryParameter("PageNumber", "1")
+            .AddQueryParameter("PageSize", "4");
+
+        var response = client.Execute<PagedResponse<ProductDto>>(req);
+
+        productList.AddRange(response.Data.Data);
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var basketItems = await BasketClient.GetAllBasketProducts();
+    
+            foreach (var item in basketItems)
+            {
+                var idStr = item.ProductId.ToString();
+    
+                if(!_productButtonController.ButtonExist(idStr))
+                    continue;
+                
+                _productButtonController[idStr].Trigger("title");
+            }
+            StateHasChanged();
+        }
+    
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task TriggerBasketButton(string id)
+    {
+        var notification = new NotificationMessage {Duration = 12000};
+        var str = _productButtonController[id].Get("title");
+
+        if (str == "- remove from cart")
+        {
+            notification.Summary = "Product removed from cart";
+            notification.Severity = NotificationSeverity.Info;
+
+            await ShowNotification(notification);
+
+            await BasketClient.RemoveBasketProduct(int.Parse(id));
+        }
+        else
+        {
+            notification.Summary = "Product added to cart";
+            notification.Severity = NotificationSeverity.Info;
+
+            await ShowNotification(notification);
+
+            await BasketClient.UpdateOrAddInc(int.Parse(id));
+        }
+
+        _productButtonController[id].Trigger("title");
+    }
+
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

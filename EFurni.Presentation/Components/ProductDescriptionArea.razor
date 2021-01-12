@@ -1,0 +1,343 @@
+@using EFurni.Shared.DTOs
+@using EFurni.Presentation.Clients.ClientInterfaces
+@inject ICustomerClient CustomerClient;
+@inject IReviewClient ReviewClient;
+@inject NotificationService notificationService
+
+<RadzenNotification></RadzenNotification>
+
+<!--================Product Description Area =================-->
+<section class="product_description_area" style="background-color: #f5f5f7;padding-top: 20px">
+<div class="container">
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home"
+           aria-selected="true">
+            Description
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile"
+           aria-selected="false">
+            Specification
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" id="review-tab" data-toggle="tab" href="#review" role="tab" aria-controls="review"
+           aria-selected="false">
+            Reviews
+        </a>
+    </li>
+</ul>
+<div class="tab-content" id="myTabContent">
+<div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
+    <p>
+        @Product.Description
+    </p>
+</div>
+<div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+    <div class="table-responsive">
+        <table class="table">
+            <tbody>
+            <tr>
+                <td>
+                    <h5>Width</h5>
+                </td>
+                <td>
+                    <h5>@(Math.Round(Product.ProductWidth, 2))mm</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Height</h5>
+                </td>
+                <td>
+                    <h5>@(Math.Round(Product.ProductHeight, 2))mm</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Weight</h5>
+                </td>
+                <td>
+                    <h5>@(Product.ProductWeight) kg</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Model Year</h5>
+                </td>
+                <td>
+                    <h5>@(Product.ModelYear)</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Color</h5>
+                </td>
+                <td>
+                    <h5>@Product.ProductColor</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Sub type</h5>
+                </td>
+                <td>
+                    <h5>@Product.SubType</h5>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <h5>Each Box contains</h5>
+                </td>
+                <td>
+                    <h5>@Product.BoxPieces</h5>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="tab-pane fade show active" id="review" role="tabpanel" aria-labelledby="review-tab">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="row total_rate">
+                <div class="col-6">
+                    <div class="box_total rounded-corners">
+                        <h5>Overall</h5>
+                        <h4>@Math.Round((float) Product.ProductRating, 2)</h4>
+                        <h6>@(_reviews?.Count()) Reviews</h6>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="rating_list">
+                        <h3>Based on @(_reviews?.Count()) Reviews</h3>
+                        <ul class="list">
+                            <li>
+                                <a href="#">
+                                    5 Star
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i> @_fiveStars
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#">
+                                    4 Star
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i> @_fourStars
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#">
+                                    3 Star
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i> @_threeStars
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#">
+                                    2 Star
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i> @_twoStars
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#">
+                                    1 Star
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i>
+                                    <i class="fa fa-star"></i> @_oneStarts
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="review_list">
+                @{
+                    if (_reviews != null)
+                        foreach (var review in _reviews)
+                        {
+                            <div class="review_item">
+                                <div class="media">
+                                    <div class="d-flex">
+                                        <img src="@review.CustomerPicture" heigh="70" width="70" alt=""/>
+                                    </div>
+                                    <div class="media-body">
+                                        <h4>@(review.CustomerFirstName + " " + review.CustomerLastName)</h4>  
+
+                                        @{
+                                            
+                                            var ctx = Math.Floor(review.CustomerRating);
+                                            if (ctx == 0)
+                                                ctx = 1;
+                                            
+                                            @for (int i = 0; i < ctx; i++)
+                                            {
+                                                <i class="fa fa-star"></i>
+                                            }
+                                        }
+                                        
+              
+                                    </div>
+                                </div>
+                                <p>
+                                    @review.CustomerComment
+                                </p>
+                            </div>
+                        }
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="review_box">
+                @if (Self != null)
+                {
+                    <h4>Add a Review</h4>
+                    <div class="media">
+                        <div class="d-flex" style="margin-bottom: 34px">
+                            <img src="@Self.ProfilePictureUrl" heigh="70" width="70" alt=""/>
+                            <h3 style="margin:auto"> &nbsp &nbsp &nbsp@(Self?.FirstName) @(Self?.LastName)</h3>
+                        </div>
+                    </div>
+
+                    <p class="mb-1">Your Rating:</p>
+                    <RadzenRating Change=@(args => OnChange(args, "Rating with 3 stars"))></RadzenRating>
+
+                    <p>@SelectedReviewDesc</p>
+                    <div class="col-md-12 mt-3">
+                            <div class="form-group">
+                                <textarea class="form-control" @bind="@ReviewText" name="message" rows="1" style="height: 165px;" placeholder="Review"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12 text-right">
+                            <div @onclick="@(async () => await SendComment())" class="btn_1">
+                                Submit Now
+                            </div>
+                        </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+</section>
+<!--================End Product Description Area =================-->
+<Style>
+    .ui-rating{
+    
+    }
+    .ui-rating-cancel
+    {
+    display: none;
+       visibility: hidden;
+    }
+</Style>
+
+@code {
+
+    [Parameter]
+    public ProductDto Product { get; set; }
+
+    CustomerDto Self { get; set; }
+
+    private List<CustomerReviewDto> _reviews { get; set; }
+
+    private int _fiveStars;
+    private int _fourStars;
+    private int _threeStars;
+    private int _twoStars;
+    private int _oneStarts;
+
+    private string ReviewText { get; set; }
+    
+    public int SelectedStarRating { get; set; }
+    public string SelectedReviewDesc { get; set; }
+
+    void OnChange(int value, string name)
+    {
+        SelectedStarRating = value;
+    }
+
+    public async Task SendComment()
+    {
+        await ReviewClient.CreateReviewAsync(Product.ProductId, ReviewText,SelectedStarRating);
+        _reviews.Add(new CustomerReviewDto
+        {
+            CustomerComment = ReviewText,
+            CustomerRating = SelectedStarRating,
+            CustomerPicture = Self.ProfilePictureUrl,
+            CustomerFirstName = Self.FirstName,
+            CustomerLastName = Self.LastName
+        });
+        
+        var notification = new NotificationMessage {Duration = 12000};
+        notification.Summary = "Success";
+        notification.Detail = "Review added";
+        notification.Severity = NotificationSeverity.Success;
+        await ShowNotification(notification);
+    }
+    
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }   
+    
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Self = await CustomerClient.GetSelfAsync();
+            _reviews = (await ReviewClient.GetReviews(Product.ProductId)).ToList();
+
+            var ss = _reviews.GroupBy(x => Math.Floor(x.CustomerRating))
+                .OrderByDescending(group => group.Count());
+
+            foreach (var v in ss)
+            {
+                switch (v.Key)
+                {
+                    case 1:
+                        _oneStarts = v.Count();
+                        break;
+                    case 2:
+                        _twoStars = v.Count();
+                        break;
+                    case 3:
+                        _threeStars = v.Count();
+                        break;
+                    case 4:
+                        _fourStars = v.Count();
+                        break;
+                    case 5:
+                        _fiveStars = v.Count();
+                        break;
+                }
+            }
+            
+            StateHasChanged();
+        }
+
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+}

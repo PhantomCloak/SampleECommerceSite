@@ -1,0 +1,43 @@
+@page "/order/{orderId}"
+@using EFurni.Presentation.Components
+
+<!doctype html>
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+<body>
+<!--================ confirmation part start =================-->
+@{
+    int orderNumber;
+    try
+    {
+        orderNumber = int.Parse(ViewContext.RouteData.Values["orderId"].ToString());
+    }
+    catch
+    {
+        orderNumber = 0;
+    }
+}
+@* <section> *@
+@*     <div class="container"> *@
+@*         <div class="row"> *@
+@*             <div class="col-lg-12"> *@
+@*                 <div class="confirmation_tittle" style="text-align: center"> *@
+@*                     <span>Thank you. Your order has been received.</span> *@
+@*                 </div> *@
+@*             </div> *@
+@*      *@
+@*         </div> *@
+@*     </div> *@
+@* </section> *@
+
+
+<component type="typeof(OrderInfo)" render-mode="ServerPrerendered" param-OrderId="@orderNumber"/>
+
+<!--================ confirmation part end =================-->
+</body>
+
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")

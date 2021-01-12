@@ -1,0 +1,33 @@
+@page "{initialPage?}"
+<!doctype html>
+<html lang="zxx">
+
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+<!--================Category Product Area =================-->
+<section class="cat_product_area section_padding" style="background-color: #f5f5f7;padding-top: 200px !important;">
+    @{
+        var categoryName = Request.Query["initialPage"];
+        string val = string.Empty;
+        if (categoryName.Count > 0)
+        {
+            val = categoryName.ToString();
+        }
+    }
+    @* <CategoryMain InitialPage="@val"></CategoryMain> *@
+    <component type="typeof(CategoryMain)" param-InitialPage="@val" render-mode="ServerPrerendered"/>
+</section>
+<!--================End Category Product Area =================-->
+
+<component type="typeof(BestSellersList)" render-mode="ServerPrerendered"/>
+
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")
+
+
+<script src="js/price_rangs.js"></script>
+<script src="js/stellar.js"></script>
+</html>

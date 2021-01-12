@@ -1,0 +1,63 @@
+﻿@using EFurni.Presentation.Components
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>@ViewData["Title"] - e_furniture</title>
+    <link rel="icon" href="../img/favicon.png">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <!-- animate CSS -->
+    <link rel="stylesheet" href="../css/animate.css">
+    <!-- owl carousel CSS -->
+    <link rel="stylesheet" href="../css/owl.carousel.min.css">
+    <link rel="stylesheet" href="../css/lightslider.min.css">    
+    <!-- nice select CSS -->
+    <link rel="stylesheet" href="../css/nice-select.css">
+    <!-- font awesome CSS -->
+    <link rel="stylesheet" href="../css/all.css">
+    <!-- flaticon CSS -->
+    <link rel="stylesheet" href="../css/flaticon.css">
+    <link rel="stylesheet" href="../css/themify-icons.css">
+    <!-- font awesome CSS -->
+    <link rel="stylesheet" href="../css/magnific-popup.css">
+    <!-- swiper CSS -->
+    <link rel="stylesheet" href="../css/slick.css">
+    <link rel="stylesheet" href="../css/price_rangs.css">
+    <!-- style CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../_content/Radzen.Blazor/css/default-base.css">
+    <link href="_content/Syncfusion.Blazor/styles/bootstrap4.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/blazor/18.3.47/styles/bootstrap4.css" rel="stylesheet" />
+    <script src="https://cdn.syncfusion.com/blazor/18.3.47/syncfusion-blazor.min.js"></script>
+
+</head>
+
+<body>
+@RenderSection("Styles", required: false)
+
+
+<!--================ Body Area Start =================-->
+@RenderBody()
+@RenderSection("Scripts", required: false)
+@* <component type="typeof(JSRenderer)" render-mode="ServerPrerendered"/> *@
+
+<!--================ Body Area End =================-->
+<!-- custom js -->
+@* <script src="../_framework/blazor.server.js"></script> *@
+<script src="../_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+<script src="~/_framework/blazor.server.js" autostart="false"></script>
+<script>
+    Blazor.start({
+        configureSignalR: function (builder) {
+            builder.withUrl("/_blazor");
+        }
+    });
+</script>
+
+</body>
+
+</html>

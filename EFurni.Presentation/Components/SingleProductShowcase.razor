@@ -1,0 +1,50 @@
+@using EFurni.Shared.Models
+@using EFurni.Presentation.Extensions
+@using EFurni.Shared.DTOs
+
+<div class="single_product_item rounded-corners" style="display: flex !important;padding: 0px !important;">
+    <div id=@($"popular-product-1")>
+        <div class="pretty-image-container" style="cursor: pointer" @onclick="@(async () => await OnThumbnailClick?.Invoke(Product.ProductId))">
+            <img class="pretty-image-item-1" src="@Product.ProductImage" style="padding:20px !important;" alt="">
+            <img class="pretty-image-item-2" src="https://cdn.discordapp.com/attachments/475376360416739338/792965032840396810/image6.png" height="100%" width="%100" alt=""/>
+        </div>
+        <div class="single_product_text" style="padding: 0 !important;margin:32px !important;">
+            <h4 class="semi-bold-font-text">@Product.ProductName.FirstLetterToUpper()</h4>
+            <h3 style="color: #646464" class="regular-text">$@Math.Round(Product.ListPrice, 2)</h3>
+            <a class="add_cart" @onclick="@(async () => await OnDescButtonClick?.Invoke(Product.ProductId))"></a>
+        </div>
+    </div>
+</div>
+
+<style>
+
+.single_product_text > h3{
+color: #646464;
+}    
+
+.single_product_text > a{
+cursor: pointer;
+}
+
+</style>
+
+@code {
+
+    [Parameter]
+    public ProductDto Product { get; set; }
+
+    [Parameter]
+    public Func<int, Task> OnThumbnailClick { get; set; }
+
+    // [Parameter]
+    public string ButtonTitle => Product.ProductName;
+
+    // [Parameter]
+    public string ButtonDesc => Product.Description;
+
+    public bool HasButton = true;
+
+    Func<int, Task> OnDescButtonClick { get; set; }
+
+
+}

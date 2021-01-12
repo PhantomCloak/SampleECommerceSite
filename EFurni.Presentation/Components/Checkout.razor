@@ -1,0 +1,513 @@
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Presentation.Extensions
+@using EFurni.Shared.DTOs
+@using EFurni.Shared.Models
+@using Microsoft.Extensions.Configuration
+@using Syncfusion.Blazor.Inputs
+@using System.Text.RegularExpressions
+@using Blazored.LocalStorage
+@using EFurni.Contract.V1.Queries
+@using EFurni.Contract.V1.Queries.QueryParams
+@using EFurni.Presentation.Clients
+@using EFurni.Shared.Types
+@using Syncfusion.Blazor.Notifications
+@using ChangeEventArgs = Microsoft.AspNetCore.Components.ChangeEventArgs
+
+@inject NavigationManager NavigationManager;
+@inject IBasketClient basketClient;
+@inject ISummaryClient SummaryClient;
+@inject IProductClient ProductClient;
+@inject IConfiguration Configuration;
+@inject IPostalCodeClient PostalcodeClient;
+@inject IStoreClient StoreClient;
+@inject IOrderClient OrderClient;
+@inject IPostalServiceClient PostalServiceClient;
+@inject IAuthenticationClient AuthenticationClient;
+@inject LocalStorageService LocalStorageService;
+
+<SfToast @ref="ToastObj" Title="@toastOption.Title" Content="@toastOption.Title" CssClass="e-toast-success">
+    <ToastPosition X="Right" Y="Top"></ToastPosition>
+</SfToast>
+
+@if (!RenderFinish)
+{
+    <div class='container-loader'>
+        <div class='loader'>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--text'></div>
+        </div>
+    </div>
+}
+else
+{
+    <section class="checkout_area padding_top" style="background-color: #f5f5f7">
+        <div class="container">
+            <div class="billing_details">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h3>Billing Details</h3>
+                        <form class="row contact_form" action="#" method="post" novalidate="novalidate">
+                            <div class="col-md-6 form-group p_star">
+                                <SfTextBox Placeholder='First Name' @bind-Value="@_selectedFirstName" CssClass="height: 200px;font-size: 23px;" FloatLabelType='@FloatLabelType.Auto'></SfTextBox>
+                            </div>
+                            <div class="col-md-6 form-group p_star">
+                                <SfTextBox Placeholder="Last Name" @bind-Value="@_selectedLastName" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+                            <div class="col-md-6 form-group p_star">
+                                <SfTextBox Placeholder="Phone" @bind-Value="@_selectedPhone" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+                            <div class="col-md-6 form-group p_star">
+                                <SfTextBox Placeholder="Email Address" @bind-Value="@_selectedEmail" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+
+                            <div class="col-md-6 form-group p_star">
+                                <SfComboBox Placeholder="Province" Value="_selectedProvince" DataSource="@_provinces">
+                                    <ComboBoxEvents TItem="ProvinceDto" TValue="string" ValueChange="OnProvinceChange"></ComboBoxEvents>
+                                    <ComboBoxFieldSettings Value="ProvinceName"></ComboBoxFieldSettings>
+                                </SfComboBox>
+                            </div>
+
+                            <div class="col-md-6 form-group p_star">
+                                @if (_provinceSelected)
+                                {
+                                    <SfComboBox Placeholder="District" Value="_selectedDistrict" DataSource="@_districts">
+                                        <ComboBoxEvents TItem="DistrictDto" TValue="string" ValueChange="OnDistrictChange"></ComboBoxEvents>
+                                        <ComboBoxFieldSettings Value="DistrictName"></ComboBoxFieldSettings>
+                                    </SfComboBox>
+                                }
+                            </div>
+
+                            <div class="col-md-6 form-group p_star">
+                                @if (_districtSelected)
+                                {
+                                    <SfComboBox Placeholder="District" Value="_selectedNeighborhood" DataSource="@_neighborhoods">
+                                        <ComboBoxEvents TItem="NeighborhoodDto" TValue="string" ValueChange="OnNeighborhoodChange"></ComboBoxEvents>
+                                        <ComboBoxFieldSettings Value="NeighborhoodName"></ComboBoxFieldSettings>
+                                    </SfComboBox>
+                                }
+                            </div>
+
+                            <div class="col-md-6 form-group p_star">
+                                @if (_storeSelection)
+                                {
+                                    <SfComboBox hidd Placeholder="Store" Value="_selectedStore" DataSource="@_stores">
+                                        <ComboBoxEvents TItem="StoreDto" TValue="string" ValueChange="OnStoreChange"></ComboBoxEvents>
+                                        <ComboBoxFieldSettings Value="StoreName"></ComboBoxFieldSettings>
+                                    </SfComboBox>
+                                }
+                            </div>
+                            <div class="col-md-6 form-group p_star">
+@*                                 @if (_neighborhoodSelected) *@
+@*                                 { *@
+@*                                     <SfCheckBox Label="Select Store" @bind-Checked="_storeSelection"></SfCheckBox> *@
+@*                                 } *@
+                            </div>
+                            <div class="col-md-12 form-group p_star">
+                                <SfTextBox Placeholder="Address" CssClass="e-corner" Multiline="true" Style="margin-top: 0 !important;" @bind-Value="@_selectedAddress" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+                            <div class="col-md-12 form-group p_star">
+
+                            </div>
+                            <div class="col-md-6 form-group p_star">
+                                <SfTextBox Placeholder="Postal Code" @bind-Value="@_selectedPostalCode" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+                            <div class="col-md-12 form-group">
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <div class="creat_account">
+                                    <h3>Shipping Details</h3>
+                                </div>
+
+                                @code
+                                {
+                                    string stringChecked = string.Empty;
+                                }
+
+                                <ul style="margin-top: -24px; font-size: 23px;">
+                                    @foreach (var item in _postalServices)
+                                    {
+                                        string val = $"{item.PostalServiceName} (${Math.Round(item.ServicePrice, 1)})";
+
+                                        <li>
+                                            <input type="radio" name=@item.Id id="@item.Id" value="@item.PostalServiceName" @onchange="RadioSelection"
+                                                   checked=@(string.Equals(item.PostalServiceName, _selectedCargoCompany))/>
+                                            <label style="font-size: 12px" for="@item.Id">@val</label>
+                                        </li>
+                                    }
+                                </ul>
+
+                                <SfTextBox Placeholder="Order note" @bind-Value="@_orderNote" FloatLabelType="@FloatLabelType.Auto"></SfTextBox>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="order_box">
+                            <h2>Your Order</h2>
+                            <ul class="list">
+                                <li>
+                                    <a href="#">
+                                        Product
+                                        <span>Total</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    @foreach (var item in _productList)
+                                    {
+                                        <a href="#">
+                                            @item.Key.ProductName.FirstLetterToUpper()
+                                            <span style="position:absolute;right: 50%;left: 50%;text-align:center;" class="middle">@item.Value</span>
+                                            <span class="last">$@(Math.Round(item.Key.ListPrice * item.Value, 1)))</span>
+                                        </a>
+                                    }
+                                </li>
+                            </ul>
+                            <ul class="list list_2">
+                                <li>
+                                    <a href="#">
+                                        Subtotal
+                                        <span>$@(ProductTotalPrice + 50)</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#">
+                                        Shipping
+                                        @if (!string.IsNullOrEmpty(_selectedCargoCompany))
+                                        {
+                                            var company = _postalServices.First(x => x.PostalServiceName == _selectedCargoCompany);
+                                            <span>Flat rate: $@(Math.Floor(CargoCompanyPrice))</span>
+                                        }
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#">
+                                        Total
+                                        <span>$@ProductTotalPrice</span>
+                                    </a>
+                                </li>
+                            </ul>
+                            <div class="btn_1 mt-5" style="cursor:pointer;background-color: #2997ff;color: white" @onclick="@(async () => await Submit())">Proceed to Payment</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+
+<style>
+    .e-input-group.e-control-wrapper.e-custom .e-input { 
+        font-size: 7px; 
+    } 
+    .e-input-group.e-corner {
+        border-radius: 4px;
+    }
+    .input.e-input
+    {
+        height: 35px !important;
+    }
+    .e-float-input
+    {
+           margin-top: 14px !important;
+    }
+    .e-input-group input
+    {
+        height: 35px !important;    
+        font-size: 23px !important;
+    }
+    e-label-top
+    {
+        font-size: 17px !important;
+    }
+    .company-textbox
+    {
+       margin-top: 14px !important;
+    }
+    .billing_details .contact_form .form-group input {
+        border-radius: 3px;
+        /*color: black !important;*/
+    }
+    
+</style>
+
+@code{
+    private Dictionary<string, bool> _radioBtn;
+    private Dictionary<ProductDto, int> _productList;
+    private List<BasketItem> _basketItems;
+
+    private List<PostalServiceDto> _postalServices;
+
+    private List<ProvinceDto> _provinces;
+    private List<DistrictDto> _districts;
+    private List<NeighborhoodDto> _neighborhoods;
+    private List<StoreDto> _stores;
+
+    private string _checkedValue = "";
+
+    private string _selectedProvince = "";
+    private string _selectedDistrict = "";
+    private string _selectedNeighborhood = "";
+    private string _selectedStore = "";
+    private string _selectedAddress = "";
+    private string _orderNote = "";
+
+    private string _selectedFirstName = "";
+    private string _selectedLastName = "";
+    private string _selectedPhone = "";
+    private string _selectedEmail = "";
+    private string _selectedPostalCode = "";
+    private string _selectedCargoCompany = "";
+
+    private bool _storeSelection = false;
+
+    private bool _provinceSelected = false;
+    private bool _districtSelected = false;
+    private bool _neighborhoodSelected = false;
+    private bool RenderFinish { get; set; }
+    private bool LoggedIn = false;
+    public SfToast ToastObj = new SfToast();
+    private ToastOption toastOption = new ToastOption();
+
+    private class ToastOption
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string CssClass { get; set; }
+    }
+
+    private double CargoCompanyPrice
+    {
+        get
+        {
+            var company = _postalServices.FirstOrDefault(x => x.PostalServiceName == _selectedCargoCompany);
+            if (company == null)
+                return 0;
+
+            return company.ServicePrice;
+        }
+    }
+
+    private double ProductTotalPrice
+    {
+        get
+        {
+            double sum = 0;
+            var company = _postalServices.FirstOrDefault(x => x.PostalServiceName == _selectedCargoCompany);
+
+            if (company != null)
+            {
+                sum += CargoCompanyPrice;
+            }
+
+            foreach (var product in _productList)
+            {
+                sum += product.Key.ListPrice * product.Value;
+            }
+            return Math.Round(sum);
+        }
+    }
+
+    void RadioSelection(ChangeEventArgs args)
+    {
+        _selectedCargoCompany = args.Value.ToString();
+    }
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        _productList = new Dictionary<ProductDto, int>();
+
+        _provinces = new List<ProvinceDto>();
+        _districts = new List<DistrictDto>();
+        _neighborhoods = new List<NeighborhoodDto>();
+        _postalServices = new List<PostalServiceDto>();
+
+
+        await LoadLocations();
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    private async Task Submit()
+    {
+        await ShowInfoMessage("Order processing..");
+        var createOrderQuery = await GetCurrentOrderQuery();
+        var result = await OrderClient.CreateOrder(createOrderQuery);
+
+        if (result != null)
+        {
+            await ShowSuccessMessage("Order placed successfully");
+        }
+        else
+        {
+            await ShowErrorMessage("Failed to place order");
+            return;
+        }
+
+    // basketClient = new BasketLocalClient(LocalStorageService);
+        _basketItems.Clear();
+        await basketClient.ClearAllBasket();
+        NavigationManager.NavigateTo($"/order/{result.OrderId}", true);
+        StateHasChanged();
+    }
+
+    private async Task ShowSuccessMessage(string msg)
+    {
+        toastOption.Title = "Success";
+        toastOption.CssClass = "e-toast-success";
+        toastOption.Content = msg;
+
+        await ToastObj.Show();
+    }
+
+    private async Task ShowErrorMessage(string msg)
+    {
+        toastOption.Title = "Failed";
+        toastOption.CssClass = "e-toast-fail";
+        toastOption.Content = msg;
+
+        await ToastObj.Show();
+    }
+    
+    private async Task ShowInfoMessage(string msg)
+    {
+        toastOption.Title = "Info";
+        toastOption.CssClass = "e-toast-information";
+        toastOption.Content = msg;
+
+        await ToastObj.Show();
+    }
+    private async Task<CreateOrderQuery> GetCurrentOrderQuery()
+    {
+        var newOrder = new CreateOrderQuery
+        {
+            OptionalMail = (!string.IsNullOrEmpty(_selectedEmail) ? _selectedEmail : null)!,
+            DeliveryAddress = _selectedAddress,
+            PhoneNumber = _selectedPhone,
+            FirstName = _selectedFirstName,
+            SecondName = _selectedLastName,
+            PostalServiceName = _selectedCargoCompany,
+            DeliveryZipCode = _selectedPostalCode,
+            AdditionalNote = _orderNote
+        };
+
+    //get stores nearby
+        var matchedStores = await StoreClient.GetNearestStores(_selectedPostalCode, _basketItems.Select(x => x.ProductId).ToArray());
+
+    //get lookup with productId index
+        var storeLookup = (from dd in matchedStores
+            select new
+            {
+                Store = dd.Entity.Entity,
+                Distance = dd.Entity.DistanceFromSourceInMeter,
+                MatchedProductId = dd.Association
+            }).ToLookup(x => x.MatchedProductId);
+
+        newOrder.Products = new CreateOrderProductParams[storeLookup.Count()];
+
+        for (int i = 0; i < storeLookup.Count; i++)
+        {
+            var basketItem = _basketItems[i];
+            var matchObj = storeLookup[basketItem.ProductId].OrderBy(x => x.Distance).First();
+
+            newOrder.Products[i] = new CreateOrderProductParams()
+            {
+                ProductId = matchObj.MatchedProductId,
+                StoreId = matchObj.Store.StoreId,
+                Quantity = basketItem.Amount
+            };
+        }
+
+        return newOrder;
+    }
+
+    private async Task LoadLocations()
+    {
+        var provinces = await PostalcodeClient.GetProvinces("TR");
+        _provinces.AddRange(provinces);
+    }
+
+    private async Task LoadProducts()
+    {
+        _postalServices = (await PostalServiceClient.GetPostalServices()).ToList();
+        _basketItems = (await basketClient.GetAllBasketProducts()).ToList();
+
+        foreach (var item in _basketItems)
+        {
+            var product = await ProductClient.GetProductAsync(item.ProductId);
+            _productList.Add(product, item.Amount);
+        }
+
+        StateHasChanged();
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            LoggedIn = await AuthenticationClient.IsLoggedIn();
+            await LoadProducts();
+            RenderFinish = true;
+            StateHasChanged();
+        }
+    }
+
+    #region UI Events
+
+    private async Task OnProvinceChange(ChangeEventArgs<string, ProvinceDto> args)
+    {
+        _selectedProvince = args.Value;
+
+        _provinceSelected = true;
+
+        var districts = await PostalcodeClient.GetDistricts("TR", _selectedProvince);
+        _districts.AddRange(districts);
+
+        StateHasChanged();
+    }
+
+    private async Task OnDistrictChange(ChangeEventArgs<string, DistrictDto> args)
+    {
+        _selectedDistrict = args.Value;
+
+        _districtSelected = true;
+
+        var neighborhoods = await PostalcodeClient.GetNeighborhoods("TR", _selectedProvince, _selectedDistrict);
+        _neighborhoods.AddRange(neighborhoods);
+
+        StateHasChanged();
+    }
+
+    private async Task OnNeighborhoodChange(ChangeEventArgs<string, NeighborhoodDto> args)
+    {
+        _selectedNeighborhood = args.Value;
+        _selectedPostalCode = args.ItemData.ZipCode;
+
+        _neighborhoodSelected = true;
+
+    // _stores = (await StoreClient.GetNearestStores(_selectedPostalCode))
+    //     .OrderBy(x => x.DistanceFromSourceInMeter)
+    //     .Select(x => new StoreDto()
+    //     {
+    //         StoreName = x.Entity.StoreName + $" ({x.DistanceFromSourceInMeter / 1000} KM)"
+    //     }).ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task OnStoreChange(ChangeEventArgs<string, StoreDto> args)
+    {
+        var val = Regex.Replace(args.Value, "(\\(.*\\))", "");
+        val = val.TrimEnd(' ');
+        _selectedStore = val;
+
+        StateHasChanged();
+    }
+
+    #endregion
+
+}

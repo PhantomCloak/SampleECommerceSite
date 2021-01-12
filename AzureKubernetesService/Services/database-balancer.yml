@@ -1,0 +1,12 @@
+#only for service purposes otherwise database should not expose to public network
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-loadbalancer
+spec:
+  selector:
+    app: postgres-pod
+  ports:
+    - port: 5000 #front-end port
+      targetPort: 5432 #back-end port
+  type: LoadBalancer

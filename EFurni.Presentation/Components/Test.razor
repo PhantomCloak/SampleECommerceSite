@@ -1,0 +1,50 @@
+@* @namespace EFurni.Presentation.Components.Test *@
+@* @using Syncfusion.Blazor.Notifications *@
+@* @using EFurni.Presentation.Clients.ClientInterfaces *@
+@* @using Blazored.LocalStorage *@
+@* @inject LocalStorageService service; *@
+@* @inject IClientSideStorage storage; *@
+@* *@
+@* <SfToast @ref="ToastObj" Title="@ToastTitle" Content="@ToastContent" CssClass="@ToastCssClass"> *@
+@*     <ToastPosition X="Right" Y="Bottom"></ToastPosition> *@
+@* </SfToast> *@
+@* <p>Example phrase @storage["token"]</p> *@
+@* <div class="col-lg-12 col-sm-12 col-md-12 center"> *@
+@*     <div style="margin: auto; text-align: center"> *@
+@*         <SfButton @onclick="@ShowToast"> Show Toast </SfButton> *@
+@*     </div> *@
+@* </div> *@
+@* *@
+@* @code { *@
+@*     SfToast ToastObj; *@
+@* *@
+@*     private int ToastFlag; *@
+@*     private string ToastTitle = ""; *@
+@*     private string ToastContent = ""; *@
+@*     private string ToastCssClass = ""; *@
+@* *@
+@*     private class ToastOption *@
+@*     { *@
+@*         public string Title { get; set; } *@
+@*         public string Content { get; set; } *@
+@*         public string CssClass { get; set; } *@
+@*     } *@
+@* *@
+@*     private ToastOption[] Toasts = { *@
+@*         new ToastOption { Title = "Warning !", Content = "There was a problem with your network connection.", CssClass = "e-toast-warning" }, *@
+@*         new ToastOption { Title = "Success !", Content = "Your message has been sent successfully.", CssClass = "e-toast-success" }, *@
+@*         new ToastOption { Title = "Error !", Content = "A problem has been occurred while submitting your data.", CssClass = "e-toast-danger" }, *@
+@*         new ToastOption { Title = "Information !", Content = "Please read the comments carefully.", CssClass = "e-toast-info" } *@
+@*     }; *@
+@* *@
+@*     public override Task SetParametersAsync(ParameterView parameters) *@
+@*     { *@
+@*         storage.Initialize(service); *@
+@*         return base.SetParametersAsync(parameters); *@
+@*     } *@
+@* *@
+@*     private async Task ShowToast() *@
+@*     { *@
+@*         storage.SetValue("token","DD"); *@
+@*     } *@
+@* } *@

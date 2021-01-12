@@ -1,0 +1,41 @@
+@page "{productNumber}"
+@using EFurni.Presentation.Components
+@using Microsoft.Extensions.Configuration
+@using RestSharp
+@using EFurni.Contract.V1
+@using EFurni.Contract.V1.Responses
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using Blazored.LocalStorage
+@inject IProductClient ProductClient
+@inject ICustomerClient CustomerClient;
+<!--================End Home Banner Area =================-->
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@{
+    try
+    {
+        int productId = int.Parse(RouteData.Values["productNumber"].ToString());
+
+        var product = await ProductClient.GetProductAsync(productId);
+        <div class="product_image_area section_padding" style="background-color: #f5f5f7;padding-top: 100px">
+            <div class="container">    
+                <div class="row s_product_inner justify-content-start">
+
+                    <component type="typeof(ProductShowcase)" render-mode="Static" param-Product="@product"/>
+                    <component type="typeof(ProductInfo)" render-mode="ServerPrerendered" param-Product="@product"/>
+                </div>
+            </div>
+        </div>
+        <component type="typeof(ProductDescriptionArea)" render-mode="ServerPrerendered" param-Product="@product"/>
+    }
+    catch (Exception e)
+    {
+    }
+}
+
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")

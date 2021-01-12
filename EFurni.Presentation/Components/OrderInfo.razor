@@ -1,0 +1,159 @@
+@using EFurni.Shared.DTOs
+@using EFurni.Presentation.Clients.ClientInterfaces
+@inject IOrderClient OrderClient
+@inject NavigationManager NavigationManager
+
+@if (_orderDto != null)
+{
+    <section class="confirmation_part padding_top" style="background-color: #f5f5f7">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6 col-lx-4">
+                    <div class="single_confirmation_details rounded-corners" style="background-color: white">
+                        <h4>Order info</h4>
+                        <ul>
+                            <li>
+                                <p class="regular-font-text">Order number</p><span class="regular-font-text">: @_orderDto.OrderId</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Receiver</p><span class="regular-font-text">: @(_orderDto.ReceiverFirstName + " " + _orderDto.ReceiverLastName)</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Sender</p><span class="regular-font-text">: Aranoz Corp.</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Phone</p><span class="regular-font-text">: +@(_orderDto.PhoneNumber)</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Place date</p><span class="regular-font-text">: @_orderDto.OrderDate.ToString("yyyy-MM-dd HH:mm")</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-lx-4">
+                    <div class="single_confirmation_details rounded-corners" style="background-color: white">
+                        <h4>Shipping Address</h4>
+                        <ul>
+                            <li>
+                                <p class="regular-font-text">Neighborhood</p><span class="regular-font-text">: @_orderDto.NeighborhoodName</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">District</p><span class="regular-font-text">: @_orderDto.DistrictName</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Province</p><span class="regular-font-text">: @_orderDto.ProvinceName</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Country</p><span class="regular-font-text">: @_orderDto.CountryTag</span>
+                            </li>
+                            <li>
+                                <p class="regular-font-text">Postal Code</p><span class="regular-font-text">: @_orderDto.ShippingPostalCode</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                            <div class="col-lg-6 col-lx-4" style="padding-top: 25px">
+                                <div class="single_confirmation_details rounded-corners" style="background-color: white">
+                                    <h4>Delivery Info</h4>
+                                    <ul>
+                                        <li>
+                                            <p class="regular-font-text">Cargo Service</p><span class="regular-font-text">: @_orderDto.CargoCompany</span>
+                                        </li>
+                                        <li>
+                                            <p class="regular-font-text">Shipped</p><span class="regular-font-text">: @_orderDto.ShippedDate</span>
+                                        </li> 
+                                        <li>
+                                            <p class="regular-font-text">Est. Arrival</p><span class="regular-font-text">: @_orderDto.RequiredDate</span>
+                                        </li>
+                                        <li>
+                                            <p class="regular-font-text">Cost</p><span class="regular-font-text">: @(Math.Round(_orderDto.CargoCost,2))</span>
+                                        </li>
+                                        <li>
+                                            <p class="regular-font-text">Status</p>: <a href="/" class="regular-font-text" style="color: #2997ff;cursor: pointer"> @_orderDto.OrderStatus</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="order_details_iner rounded-corners" style="background-color: white">
+                        <h3>Order Details</h3>
+                        <table class="table table-borderless">
+                            <thead>
+                            <tr>
+                                <th scope="col" colspan="2">Product</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @if (_orderDto != null)
+                            {
+                                foreach (var item in _orderDto.SubOrders)
+                                {
+                                    <tr>
+                                        <th colspan="2">
+                                            <a class="regular-font-text" style="color: #2997ff;cursor: pointer">@(item.ProductName)</a>
+                                        </th>
+                                        <th>x@(item.Quantity)</th>
+                                        <th>
+                                            <span class="regular-font-text">$@(Math.Round(item.Quantity * item.ListPrice, 2))</span>
+                                        </th>
+                                    </tr>
+                                }
+                            }
+                            <tr>
+                                <th colspan="3">Subtotal</th>
+                                <th>
+                                    <span class="regular-font-text">$@(Math.Round(_orderDto.SubOrders.Sum(x => x.ListPrice * x.Quantity), 2))</span>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th colspan="3">shipping</th>
+                                <th>
+                                    <span class="regular-font-text">$@(Math.Round(_orderDto.CargoCost, 2))</span>
+                                </th>
+                            </tr>
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                @{
+                                    var foo = _orderDto.SubOrders.Sum(x => x.Quantity);
+                                }
+                                <th scope="col" colspan="3" class="regular-font-text">Total Amount: @Math.Round((decimal) foo, 2)</th>
+                                <th scope="col" class="regular-font-text">Total: $@(Math.Round(_orderDto.SubOrders.Sum(x => x.ListPrice * x.Quantity) + _orderDto.CargoCost, 2))</th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private CustomerOrderDto _orderDto;
+    private PostalServiceDto _postalService;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _orderDto = await OrderClient.GetOrder(OrderId);
+
+            if (_orderDto == null)
+            {
+                NavigationManager.NavigateTo("/404",true);
+            }
+            StateHasChanged();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+}

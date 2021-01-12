@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: efurni-core-deployment
+spec:
+  selector:
+    matchLabels:
+      app: efurni-core-pod
+  template:
+    metadata:
+      labels:
+        app: efurni-core-pod
+    spec:
+      replicas: 2
+      containers:
+        - name: efurni-core-container
+          image: efurni01.azurecr.io/efurni-core:v1
+          resources:
+            limits:
+              memory: "1000Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80

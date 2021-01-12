@@ -1,0 +1,549 @@
+@using Microsoft.Extensions.Configuration
+@using System.Linq;
+@using EFurni.Shared.DTOs
+@using EFurni.Contract.V1.Queries
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Presentation.Extensions
+@using EFurni.Presentation.Extensions.ButtonController
+@using Syncfusion.Blazor.Notifications
+
+@namespace EFurni.Presentation.Components.Category
+
+@inject IConfiguration Configuration;
+@inject NavigationManager NavigationManager;
+@inject IBasketClient BasketClient;
+@inject ISummaryClient summaryClient;
+@inject IProductClient productClient;
+@inject NotificationService notificationService
+
+
+<SfToast @ref="ToastObj" Title="@toastOption.Title" Content="@toastOption.Title" CssClass="e-toast-success">
+    <ToastPosition X="Right" Y="Top"></ToastPosition>
+</SfToast>
+
+<RadzenNotification></RadzenNotification>
+
+@if (!LoadingComplated)
+{
+    <div class='container-loader'>
+        <div class='loader'>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--text'></div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3">
+                <div class="left_sidebar_area">
+                    <aside class="left_widgets p_filter_widgets">
+                        <div class="l_w_title">
+                            <h3>Browse Categories</h3>
+                        </div>
+                        <div class="widgets_inner">
+                            <ul class="list">
+                                @{
+                                    foreach (var categoryName in _categoryInfo.CategoryNames.Zip(_categoryInfo.TotalProductCounts))
+                                    {
+                                        _categoryButtonController.RegisterButton(categoryName.First);
+                                        _categoryButtonController[categoryName.First].Add("color", "button-toggle-off", "button-toggle-on");
+
+                                        <li>
+                                            <label class="@_categoryButtonController[categoryName.First].Get("color") hover-test1" style="cursor:pointer" @onclick="@(x => SetCategory(categoryName.First))">@categoryName.First.FirstLetterToUpper()</label>
+                                            <span>(@categoryName.Second)</span>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </aside>
+                    <aside class="left_widgets p_filter_widgets">
+                        <div class="l_w_title">
+                            <h3>Brand filter</h3>
+                        </div>
+                        <div class="widgets_inner">
+                            <ul class="list">
+                                @foreach (var brandName in _brandInfo.BrandNames)
+                                {
+                                    _brandButtonController.RegisterButton(brandName);
+                                    _brandButtonController[brandName].Add("color", "button-toggle-off", "button-toggle-on");
+
+                                    <li>
+                                        <a @onclick="@(x => SetBrand(brandName))" class=@($"category-button {_brandButtonController[brandName].Get("color")}") style="cursor:pointer">@(brandName)</a>
+                                    </li>
+                                }
+                                <div class="l_w_title pl-0">
+                                    <h3>Model Year filter</h3>
+                                </div>
+                                <div class="price_text mt-n2">
+                                    <p>Desired Year between</p>
+                                </div>
+                                <RadzenTextBox Change=@(args => OnMinYearChange(args, "1t4")) Placeholder="Min" Style="width: 75px; height: 30px;margin-top: 10px;margin-right: 5px" @bind-Value=@MinYearStr></RadzenTextBox>
+                                <RadzenTextBox Change=@(args => OnMaxYearChange(args, "1t3")) Placeholder="Max" @bind-Value=@MaxYearStr Style="margin-left: 5px;width: 75px;height: 30px;margin-top: 10px;"></RadzenTextBox>
+                            </ul>
+                        </div>
+                    </aside>
+                    <aside class="left_widgets p_filter_widgets">
+                        <div class="l_w_title">
+                            <h3>Color Filter</h3>
+                        </div>
+                        <div class="widgets_inner">
+                            <ul class="list">
+                                @foreach (var color in _productInfo.AvailableColors)
+                                {
+                                    _colorButtonController.RegisterButton(color);
+                                    _colorButtonController[color].Add("color", "button-toggle-off", "button-toggle-on");
+                                    <li>
+                                        <a @onclick="@(x => SetColor(color))"
+                                            class=@($"category-button {_colorButtonController[color].Get("color")}")
+                                            style="cursor:pointer">
+                                            @(color.FirstLetterToUpper())
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </aside>
+                    <aside class="left_widgets p_filter_widgets price_rangs_aside">
+                        <div class="l_w_title">
+                            <h3>Price Filter</h3>
+                        </div>
+                        <div class="widgets_inner">
+                            <div class="price_text mt-3">
+                                <p>Desired Price between</p>
+                            </div>
+                            <div class="d-flex">
+                                <div class="d-flex justify-content-center">
+                                    <RadzenTextBox Placeholder="Min" Style="width: 75px; height: 30px;margin-top: 10px;margin-right: 5px" @bind-Value=@MinPriceStr Change=@(args => OnMinPriceChange(args, "1t1"))></RadzenTextBox>
+                                    <RadzenTextBox Placeholder="Max" @bind-Value=@MaxPriceStr Change=@(args => OnMaxPriceChange(args, "1t2")) Style="margin-left: 5px;width: 75px;height: 30px;margin-top: 10px;"></RadzenTextBox>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="product_top_bar d-flex justify-content-between align-items-center">
+                            <div class="single_product_menu">
+                                <p><span>@_totalItems </span>- Products Found</p>
+                            </div>
+                            <div class="single_product_menu d-flex">
+                                <h5 style="align-self: center">Sort by : </h5>
+                                <RadzenDropDown AllowClear="true" TValue="string"
+                                                Data="@_sortOptions"
+                                                TextProperty="BrandName"
+                                                Placeholder="Select"
+                                                Change="@(args => OnSortDropdownChange(args))"
+                                                Style="width: 125px; height: 30px; align-self: center; border: none; background:none;box-shadow: none!important;"/>
+                            </div>
+                            <div class="single_product_menu d-flex">
+                            </div>
+                            <div class="single_product_menu d-flex">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row align-items-center latest_product_inner">
+                    @for (var index = 0; index < _tileProducts.Count; index++)
+                    {
+                        var product = _tileProducts[index];
+                        var productIdStr = product.ProductId.ToString();
+
+                        <div class="col-lg-4 col-sm-6">
+                            <div class="single_product_item rounded-corners" style="display: flex !important;padding: 0px !important;">
+                                <div id=@($"popular-product-{index}") class=@product.ProductId>
+                                    <div @onclick="@(() => { NavigationManager.NavigateTo($"/product/{product.ProductId}", true); })" class="pretty-image-container" style="cursor: pointer">
+                                        <img class="pretty-image-item-1" src="@product.ProductImage" style="padding:20px !important;" alt="">
+                                        <img class="pretty-image-item-2" src="https://cdn.discordapp.com/attachments/475376360416739338/792965032840396810/image6.png" height="100%" width="%100" alt=""/>
+                                    </div>
+                                    <div class="single_product_text" style="padding: 0 !important;margin:32px !important;">
+                                        <h4 class="semi-bold-font-text">@(product.ProductName.FirstLetterToUpper() + " " + product.ProductId)</h4>
+                                        <h3 style="color: #646464" class="regular-text">$@Math.Round(product.ListPrice, 2)</h3>
+                                        <a style="cursor: pointer"
+                                           class="add_cart"
+                                           @onclick="@(async () => await TriggerBasketButton(productIdStr))">
+                                            @(_productButtonController[productIdStr].Get("title"))
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="col-lg-12">
+                        <div class="pageination">
+                            <nav aria-label="Page navigation example">
+                                <ul class="pagination justify-content-center">
+                                    <li class="page-item">
+                                        <a class="page-link" href="#" aria-label="Previous">
+                                            <i class="ti-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    @for (int i = 0; i < Math.Ceiling((double) _totalItems / PageSize); i++)
+                                    {
+                                        var str = (i + 1).ToString();
+
+                                        _navigationButtonController.RegisterButton(str);
+                                        _navigationButtonController[str].Add("color", "button-toggle-off", "button-toggle-on");
+
+
+                                        <li class="page-item">
+                                            <a
+                                                class=@($"page-link {_navigationButtonController[str].Get("color")}")
+                                                style="cursor:pointer"
+                                                @onclick="@(async () => { await SetPage(str); })">
+                                                @(i + 1)
+                                            </a>
+                                        </li>
+                                    }
+                                    <li class="page-item">
+                                        <a class="page-link" href="#" aria-label="Next">
+                                            <i class="ti-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+<style>
+    span.ui-slider-handle {
+        height: 15px;
+        content: '';
+    }
+    .ui-slider-handle:before{
+        content: '';
+    }
+    .button-toggle-on{
+       color: #2997ff !important;
+    }
+    .button-toggle-off{
+       color: #0b0b0b;
+    }
+    .e-spinner-pane .e-spinner-inner .e-spin-bootstrap4 {
+       stroke: red;
+    }
+</style>
+
+@code
+{
+    [Parameter]
+    public string InitialPage { get; set; }
+
+    private ButtonController _categoryButtonController;
+    private ButtonController _brandButtonController;
+    private ButtonController _yearButtonController;
+    private ButtonController _colorButtonController;
+    private ButtonController _navigationButtonController;
+    private ButtonController _productButtonController = new ButtonController(false);
+
+    private List<ProductDto> _tileProducts;
+    private ProductFilterQuery _productQueryFilter;
+
+    private ProductInfoDto _productInfo;
+    private CategoryInfoDto _categoryInfo;
+    private BrandInfoDto _brandInfo;
+
+    public SfToast ToastObj;
+
+    private string[] _sortOptions;
+
+    private int CurrentPage = 1;
+    private int PageSize = 9;
+    private int _totalItems;
+
+    private string MinPriceStr { get; set; }
+    private string MaxPriceStr { get; set; }
+
+    private string MinYearStr { get; set; }
+    private string MaxYearStr { get; set; }
+
+    private bool LoadingComplated { get; set; }
+
+    private int MinYear => string.IsNullOrEmpty(MinYearStr) ? 0 : int.Parse(MinYearStr);
+
+    private int MaxYear => string.IsNullOrEmpty(MaxYearStr) ? 0 : int.Parse(MaxYearStr);
+
+    private int MinPrice => string.IsNullOrEmpty(MinPriceStr) ? 0 : int.Parse(MinPriceStr);
+
+    private int MaxPrice => string.IsNullOrEmpty(MaxPriceStr) ? 0 : int.Parse(MaxPriceStr);
+
+    public bool HasInitialCategory => !string.IsNullOrEmpty(InitialPage);
+
+    private ToastOption toastOption;
+
+    private class ToastOption
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string CssClass { get; set; }
+    }
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        InitializeFields();
+        await FetchResourcesAsync();
+
+        await base.SetParametersAsync(parameters);
+    }
+
+    private void InitializeFields()
+    {
+        toastOption = new ToastOption();
+        _productQueryFilter = new ProductFilterQuery();
+
+        _categoryButtonController = new ButtonController();
+        _brandButtonController = new ButtonController();
+        _yearButtonController = new ButtonController();
+        _colorButtonController = new ButtonController();
+        _navigationButtonController = new ButtonController();
+
+        _tileProducts = new List<ProductDto>();
+
+        _sortOptions = new[] {"Price", "Model Year", "Star", "Popularity"};
+    }
+
+    private async Task FetchResourcesAsync()
+    {
+        _productInfo = await summaryClient.GetProductInfoAsync();
+        _brandInfo = await summaryClient.GetBrandInfoAsync();
+        _categoryInfo = await summaryClient.GetCategoryInfoAsync();
+
+        MinPriceStr = Math.Round(_productInfo.MinPriceRange, 2).ToString();
+        MaxPriceStr = Math.Round(_productInfo.MaxPriceRange, 2).ToString();
+
+        MinYearStr = _productInfo.MinYearRange.ToString();
+        MaxYearStr = _productInfo.MaxYearRange.ToString();
+    }
+
+    private async Task TriggerBasketButton(string id)
+    {
+        var notification = new NotificationMessage {Duration = 12000};
+        var str = _productButtonController[id].Get("title");
+
+        if (str == "- remove from cart")
+        {
+            notification.Summary = "Product removed from cart";
+            notification.Severity = NotificationSeverity.Info;
+
+            await ShowNotification(notification);
+
+            await BasketClient.RemoveBasketProduct(int.Parse(id));
+        }
+        else
+        {
+            notification.Summary = "Product added to cart";
+            notification.Severity = NotificationSeverity.Info;
+
+            await ShowNotification(notification);
+
+            await BasketClient.UpdateOrAddInc(int.Parse(id));
+        }
+
+        _productButtonController[id].Trigger("title");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RefreshProducts();
+           
+            TurnOffLoadingScreen();
+
+            StateHasChanged();
+
+            if (HasInitialCategory)
+            {
+                await SetInitialPage();
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task SetInitialPage()
+    {
+        switch (InitialPage)
+        {
+            case "new":
+                _productQueryFilter.Sort = "model_year_desc";
+                break;
+            default:
+                await SetCategory(InitialPage);
+                break;
+        }
+    }
+
+    private async Task SetupBasketItems()
+    {
+        var basketProducts = await BasketClient.GetAllBasketProducts();
+
+        foreach (var item in basketProducts)
+        {
+            var productIdStr = item.ProductId.ToString();
+
+            if (!_productButtonController.ButtonExist(productIdStr))
+                continue;
+
+            _productButtonController.TriggerButton(productIdStr);
+        }
+    }
+
+    private async Task RefreshProducts()
+    {
+        _tileProducts.Clear();
+
+        var allProductsQuery = await productClient.GetProductsAsync(_productQueryFilter, PageSize, CurrentPage);
+
+        foreach (var product in allProductsQuery.Products)
+        {
+            InitProductTileProperties(product);
+        }
+
+        _tileProducts.AddRange(allProductsQuery.Products);
+        _totalItems = allProductsQuery.FilterCount;
+
+        await SetupBasketItems();
+        StateHasChanged();
+    }
+
+    private void InitProductTileProperties(ProductDto product)
+    {
+        var productIdStr = product.ProductId.ToString();
+
+        _productButtonController.RegisterButton(productIdStr);
+        _productButtonController[productIdStr].Add("title", "+ add to cart", "- remove from cart");
+    }
+
+    private void TurnOffLoadingScreen()
+    {
+        LoadingComplated = true;
+    }
+
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    #region Filter Button Callbacks
+
+    private async Task SetCategory(string categoryName)
+    {
+        _productQueryFilter.CategoryName = _productQueryFilter.CategoryName == categoryName ? null : categoryName;
+
+        _categoryButtonController.TriggerButton(categoryName);
+
+        await RefreshProducts();
+    }
+
+    private async Task SetBrand(string brandName)
+    {
+        _productQueryFilter.BrandName = _productQueryFilter.BrandName == brandName ? null : brandName;
+
+        _brandButtonController.TriggerButton(brandName);
+
+        await RefreshProducts();
+    }
+
+    private async Task SetColor(string colorName)
+    {
+        _productQueryFilter.ProductColor = _productQueryFilter.ProductColor == colorName ? null : colorName;
+
+        _colorButtonController.TriggerButton(colorName);
+
+        await RefreshProducts();
+    }
+
+    private async Task SetYear(string yearStr)
+    {
+        int year = int.Parse(yearStr);
+
+        if (year == _productQueryFilter.MinYear)
+        {
+            _productQueryFilter.MinYear = null;
+            _productQueryFilter.MaxYear = null;
+        }
+        else
+        {
+            _productQueryFilter.MinYear = year;
+            _productQueryFilter.MaxYear = year;
+        }
+        _yearButtonController.TriggerButton(yearStr);
+
+        await RefreshProducts();
+    }
+
+    private async Task SetPage(string page)
+    {
+        _navigationButtonController.TriggerButton(page);
+        CurrentPage = int.Parse(page);
+
+        await RefreshProducts();
+    }
+
+    async Task OnMinYearChange(string value, string name)
+    {
+        MinYearStr = value;
+        _productQueryFilter.MinYear = MinYear;
+        await RefreshProducts();
+    }
+
+    async Task OnMaxYearChange(string value, string name)
+    {
+        MaxYearStr = value;
+        _productQueryFilter.MaxYear = MaxYear;
+        await RefreshProducts();
+    }
+
+    async Task OnMinPriceChange(string value, string name)
+    {
+        MinPriceStr = value;
+        _productQueryFilter.MinPrice = MinPrice;
+        await RefreshProducts();
+    }
+
+    async Task OnMaxPriceChange(string value, string name)
+    {
+        MaxPriceStr = value;
+        _productQueryFilter.MaxPrice = MaxPrice;
+        await RefreshProducts();
+    }
+
+    private async Task OnSortDropdownChange(object value)
+    {
+        switch (value)
+        {
+            case "Model Year":
+                _productQueryFilter.Sort = "model_year_desc";
+                break;
+            case "Price":
+                _productQueryFilter.Sort = "list_price_desc";
+                break;
+            case "Popularity":
+                _productQueryFilter.Sort = "number_viewed_desc";
+                break;
+            case "Star":
+                _productQueryFilter.Sort = "number_viewed_desc";
+                break;
+        }
+        await RefreshProducts();
+    }
+
+    #endregion
+}

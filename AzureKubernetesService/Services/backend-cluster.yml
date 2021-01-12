@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-cluster
+spec:
+  selector:
+    app: efurni-backend-pod
+  ports:
+    - port: 8080 #front-end port
+      targetPort: 80 #back-end port

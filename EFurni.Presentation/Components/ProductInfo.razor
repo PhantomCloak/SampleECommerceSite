@@ -1,0 +1,125 @@
+@using EFurni.Presentation.Extensions
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Shared.DTOs
+@inject NavigationManager NavigationManager;
+@inject IBasketClient BasketClient;
+@inject NotificationService notificationService
+
+<RadzenNotification></RadzenNotification>
+<!--================Single Product Area =================-->
+<div class="col-lg-5 col-xl-4" style="margin-left: 65px">
+    <div class="s_product_text">
+        <h5>
+            <a href="@($"/product/{(Product.ProductId - 1)}")">previous</a><span>|</span> <a href="@($"/product/{(Product.ProductId + 1)}")">next</a>
+        </h5>
+        <h3>@Product.ProductName.FirstLetterToUpper()</h3>
+        <h2>$@Math.Round(Product.ListPrice, 2)</h2>
+        <ul class="list">
+            <li>
+                <a class="active" href="#">
+                    <span>Category</span> : <a href=@($"/categories?initialPage={Product.CategoryName}") style="color: #2997ff;">@Product.CategoryName.FirstLetterToUpper()</a>
+                </a>
+            </li>
+            <li>
+                <a href="#"> <span>Availibility</span> : In Stock</a>
+            </li>
+        </ul>
+        <p>
+            @Product.Description
+        </p>
+        <div class="card_area d-flex justify-content-between align-items-center">
+                @if (!IsAreadyAdded)
+                {
+                    <div class="product_count">
+                    <span class="inumber-decrement" @onclick="@(() => { NumberOfOrder = NumberOfOrder == 1 ? NumberOfOrder = 1 : NumberOfOrder - 1; })" style="cursor: pointer">
+                        <i class="ti-minus"></i>
+                    </span>
+                    
+                    <div class="ml-2 mr-2">
+                        @NumberOfOrder
+                    </div>
+                    <span class="number-increment" style="cursor: pointer">
+                        <i @onclick="@(() => { NumberOfOrder += 1; })" class="ti-plus"></i>
+                    </span>
+                
+                </div>
+                }
+
+                <div @onclick="@(async () => await AddBasket())" style="cursor:pointer" class="btn_1">@(IsAreadyAdded ? "Remove from the cart" : "Add to cart")</div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public ProductDto Product { get; set; }
+
+    private bool IsAreadyAdded { get; set; }
+
+    public int NumberOfOrder = 1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var product = await BasketClient.GetBasketProduct(Product.ProductId);
+
+            if (product != null)
+            {
+                IsAreadyAdded = true;
+                StateHasChanged();
+            }
+            else
+            {
+                IsAreadyAdded = false;
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public void NextPage()
+    {
+        NavigationManager.NavigateTo($"/product/{(Product.ProductId + 1)}");
+    }
+
+    public void PreviousPage()
+    {
+        NavigationManager.NavigateTo($"/product/{(Product.ProductId + -1)}");
+    }
+
+    public async Task AddBasket()
+    {
+        if (IsAreadyAdded)
+        {
+            await BasketClient.RemoveBasketProduct(Product.ProductId);
+
+            IsAreadyAdded = false;
+            StateHasChanged();
+            
+            var notificationBskt = new NotificationMessage {Duration = 12000};
+            notificationBskt.Summary = "Success";
+            notificationBskt.Detail = "Product removed from the basket";
+            notificationBskt.Severity = NotificationSeverity.Success;
+            await ShowNotification(notificationBskt);
+            return;
+        }
+        await BasketClient.CreateBasketProductAsync(Product.ProductId, NumberOfOrder);
+
+        var notification = new NotificationMessage {Duration = 12000};
+        notification.Summary = "Success";
+        notification.Detail = "Product added to basket";
+        notification.Severity = NotificationSeverity.Success;
+        await ShowNotification(notification);
+        IsAreadyAdded = true;
+        StateHasChanged();
+    }
+
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

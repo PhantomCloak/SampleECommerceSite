@@ -1,0 +1,149 @@
+@using EFurni.Presentation.Clients.ClientInterfaces
+@namespace EFurni.Presentation.Components.Login
+@inject NotificationService notificationService
+@inject NavigationManager NavigationManager
+@inject IAuthenticationClient AuthenticationClient
+@inject ICustomerClient CustomerClient
+
+<RadzenNotification></RadzenNotification>
+
+@if (!LoadingComplated)
+{
+    <div class='container-loader'>
+        <div class='loader'>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--text'></div>
+        </div>
+    </div>
+}
+else
+{
+    <section class="login_part padding_top" style="background-color: #f5f5f7">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-3 col-md-6">
+            </div>
+            <div class="col-lg-6 col-md-6">
+                <div class="login_part_form">
+                    <div class="login_part_form_iner">
+                      @if (!alreadyLoggedIn)
+                      {
+                          <h3 style="margin-bottom: 40px !important;">
+                              Welcome Back ! <br>
+                              Please Sign in now
+                          </h3>
+                          <div class="row contact_form">
+                              <div class="col-md-12 form-group p_star">
+                                  <RadzenTextBox @bind-Value=@userName style="width:391px;" Placeholder="Username"></RadzenTextBox>
+                              </div>
+                              <div class="col-md-12 form-group p_star">
+                                  <RadzenPassword @bind-Value=@userPassword style="width:391px;" Placeholder="Password"></RadzenPassword>
+                              </div>
+                              <div class="col-md-12 form-group">
+                                  @* <div class="creat_account d-flex align-items-center"> *@
+                                  @*     <input type="checkbox" id="f-option" name="selector"> *@
+                                  @*      *@
+                                      @* <label for="f-option">Remember me</label> 
+                                  </div> *@
+
+                                  <div @onclick="@(async => Login())" class="btn_1 mt-2" style="cursor: pointer;">
+                                      Log in
+                                  </div>
+                              </div>
+                              <a href="/register">Register</a>
+                          </div>
+                      }
+                      else
+                      {
+                          <h3 style="margin-bottom: 40px !important;">
+                              You already logged in what you want to do?
+                          </h3>
+                          <div @onclick="@(async => Logout())" class="btn_1 mt-2" style="cursor: pointer;margin-right: 10px">
+                              Logout
+                          </div>
+                          <div @onclick="@(async => ReLogin())" class="btn_1 mt-2" style="cursor: pointer;margin-left: 10px">
+                              Relogin
+                          </div>
+                      }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+}
+
+
+@code
+{
+    string userName { get; set; }
+    string userPassword { get; set; }
+
+    bool alreadyLoggedIn { get; set; }
+
+    public bool LoadingComplated { get; set; }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        alreadyLoggedIn = (await CustomerClient.GetSelfAsync()) != null;
+        StateHasChanged();
+
+        LoadingComplated = true;
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task Login()
+    {
+        var notification = new NotificationMessage {Duration = 12000};
+
+        bool result = await AuthenticationClient.Login(userName, userPassword);
+
+        userName = string.Empty;
+        userPassword = string.Empty;
+
+        if (!result)
+        {
+            notification.Summary = "Failed";
+            notification.Detail = "Wrong email or password";
+            notification.Severity = NotificationSeverity.Error;
+
+            await ShowNotification(notification);
+            StateHasChanged();
+        }
+        else
+        {
+            notification.Summary = "Success";
+            notification.Detail = "Logged in redirecting..";
+            notification.Severity = NotificationSeverity.Success;
+
+            await ShowNotification(notification);
+            await Task.Delay(1500);
+            NavigationManager.NavigateTo("/", true);
+        }
+
+    }
+
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Logout()
+    {
+        await AuthenticationClient.Logout();
+        NavigationManager.NavigateTo("/",true);
+    }
+
+    private async Task ReLogin()
+    {
+        await AuthenticationClient.Logout();
+        alreadyLoggedIn = false;
+        StateHasChanged();
+    }
+}

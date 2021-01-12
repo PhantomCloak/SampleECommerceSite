@@ -1,0 +1,26 @@
+@page "/basket"
+@using EFurni.Presentation.Components
+
+<!doctype html>
+<html lang="zxx">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Aranoz</title>
+    <link rel="icon" href="img/favicon.png">
+    <!-- Bootstrap CSS -->
+</head>
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts" />
+}
+<body>
+
+<component type="typeof(BasketMain)" render-mode="ServerPrerendered"/>
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")
+
+</body>
+
+</html>

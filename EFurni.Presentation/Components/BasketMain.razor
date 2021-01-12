@@ -1,0 +1,253 @@
+@using Blazored.LocalStorage
+@using EFurni.Presentation.Clients.ClientInterfaces
+@using EFurni.Presentation.Extensions
+@using EFurni.Shared.DTOs
+@using Microsoft.Extensions.Configuration
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Notifications
+@using Orientation = Syncfusion.Blazor.Navigations.Orientation
+@inject ILocalStorageService localStorage
+@inject IConfiguration configuration;
+@inject IBasketClient basketClient; 
+@inject IProductClient productClient;
+@inject NotificationService notificationService
+@inject NavigationManager NavigationManager
+@inject ICustomerClient CustomerClient;
+
+<RadzenNotification></RadzenNotification>
+@if (!RenderFinish)
+{
+    <div class='container-loader'>
+        <div class='loader'>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--dot'></div>
+            <div class='loader--text'></div>
+        </div>
+    </div>
+
+}
+else
+{
+    <section class="cart_area padding_top" style="background-color: #f5f5f7">
+    <div class="container">
+        <div class="cart_inner">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Product</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in basketProducts)
+                    {
+                        map.TryAdd(item.ProductId, 1);
+                        <tr>
+                            <td>
+                                <div class="media">
+                                    <div class="d-flex rounded-corners" style="padding: 0 !important;background-color: white;margin-right: 15px">
+                                        <div class="pretty-image-container" style="padding: 10px;cursor: pointer" @onclick="@(async () => { await DeleteFromBasket(item.ProductId); })">
+                                            <img class="pretty-image-item-1" style="border: 0 !important;" src="@item.ProductImage" alt="" width="125" height="125"/>
+                                            <img class="pretty-image-item-2" src="https://media.discordapp.net/attachments/475376360416739338/794437407364612137/icon1.jpg?width=649&height=389" height="100%" width="%100" alt=""/>
+                                        </div>
+                                    </div>
+                                    <div class="media-body">
+                                        <p style="font-size: 25px;font-weight: 400;color: #2997ff;cursor: pointer" @onclick="@(() => { NavigationManager.NavigateTo($"/product/{item.ProductId}", true); })">@item.ProductName.FirstLetterToUpper()</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <h5>$@Math.Round(item.ListPrice, 2)</h5>
+                            </td>
+                            <td>
+                                <SfNumericTextBox @bind-Value="@(map[item.ProductId])" @onclick="@(() => test())" Min=1 Step=1 Width="100" TValue="int"></SfNumericTextBox>
+                            </td>
+                            <td>
+                                <h5>$@(Math.Round(map[item.ProductId] * item.ListPrice, 2))</h5>
+                            </td>
+                        </tr>
+                    }
+                    <tr class="bottom_button">
+                        <td>
+                            <a class="btn_1" style="cursor: pointer;" @onclick="@(async () => await UpdateBasket())">Update Cart</a>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="cupon_text float-right">
+                                <a class="btn_1" style="cursor: pointer;" @onclick="@(async () => await ClearProducts())">Clear Basket</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <h5>Subtotal</h5>
+                        </td>
+                        <td>
+                            <h5>$@TotalSpent</h5>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="checkout_btn_inner float-right">
+                    <a class="btn_1" style="cursor: pointer;" @onclick="@(ContinueShopping)">Continue Shopping</a>
+                    <a class="btn_1 checkout_btn_1" style="cursor: pointer;" @onclick="@(async () => { await ContinueCheckout();})">Proceed to checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+}
+
+<style>
+    .e-plus-icon::before {
+        content: '\2212';
+    }
+    .close-button{
+        height:20px !important;
+        width:20px !important;
+        border-color: red !important;
+        background-color: #ff0000 !important;;
+    }
+    .icon-layout{
+    text-align: center !important;
+    }
+    
+    
+</style>
+
+@code
+{
+    private List<ProductDto> basketProducts = new List<ProductDto>();
+    private Dictionary<int, int> map = new Dictionary<int, int>();
+    private bool RenderFinish = false;
+    
+    private void test()
+    {
+        Console.WriteLine("a");
+    }
+    private double TotalSpent
+    {
+        get
+        {
+            double sum = 0;
+            foreach (var product in basketProducts)
+            {
+                sum += (product.ListPrice * map[product.ProductId]);
+            }
+            return Math.Round(sum, 2);
+        }
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProducts();
+            RenderFinish = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteFromBasket(int productId)
+    {
+        var basketProduct = basketProducts.FirstOrDefault(x => x.ProductId == productId);
+
+        if (basketProduct == null)
+        {
+            return;
+        }
+        
+        basketProducts.Remove(basketProduct);
+
+        await basketClient.RemoveBasketProduct(productId);
+    }
+
+    private async Task ClearProducts()
+    {
+        basketProducts.Clear();
+
+        var basketItems = await basketClient.GetAllBasketProducts();
+
+        foreach (var item in basketItems)
+        {
+            await basketClient.RemoveBasketProduct(item.ProductId);
+        }
+
+        await ShowNotification(new NotificationMessage
+        {
+            Summary = "Logged ind",
+            Detail = "Success",
+            Severity = NotificationSeverity.Success,
+            Duration = 12000
+        });
+    }
+
+
+    private async Task LoadProducts()
+    {
+        var allBasketProducts = await basketClient.GetAllBasketProducts();
+
+        foreach (var item in allBasketProducts)
+        {
+            var product = await productClient.GetProductAsync(item.ProductId);
+            basketProducts.Add(product);
+            map.Add(item.ProductId, item.Amount);
+        }
+
+        StateHasChanged();
+    }
+
+    private async void ContinueShopping()
+    {
+        NavigationManager.NavigateTo("/categories", true);
+    }
+
+    private async Task ContinueCheckout()
+    {
+        var self = await CustomerClient.GetSelfAsync();
+
+        if (!basketProducts.Any())
+        {
+            await ShowNotification(new NotificationMessage
+            {
+                Summary = "Failed",
+                Detail = "Please add one or more products into basket before continue.",
+                Severity = NotificationSeverity.Error,
+                Duration = 6000
+            });
+            return;
+        }
+        
+        if (self == null)
+        {
+            NavigationManager.NavigateTo("/login", true);
+            return;
+        }
+        
+        NavigationManager.NavigateTo("/checkout", true);
+    }
+
+    private async Task UpdateBasket()
+    {
+        foreach (var item in map)
+        {
+            await basketClient.UpdateBasketProduct(item.Key, item.Value);
+        }
+    }
+
+    private async Task ShowNotification(NotificationMessage message)
+    {
+        notificationService.Notify(message);
+        await InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,16 @@
+@page "/checkout"
+@using EFurni.Presentation.Components
+
+<!doctype html>
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+<body>
+<!--================Checkout Area =================-->
+<component type="typeof(Checkout)" render-mode="ServerPrerendered"/>
+<!--================End Checkout Area =================-->
+</body>
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")

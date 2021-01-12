@@ -1,0 +1,26 @@
+@using EFurni.Shared.DTOs
+
+<div class="col-lg-5 col-xl-5">
+    @* <div class="product_slider_img"> *@
+        @* <div id="vertical"> *@
+            @* <div data-thumb="@Product.ProductImage"> *@
+                <div class="rounded-corners" style="background-color: white">
+                     <img src="@Product.ProductImage"/>
+                </div>
+            </div>
+            @* <div data-thumb="@Product.ProductImage"> *@
+            @*     <img src="@Product.ProductImage"/> *@
+            @* </div> *@
+            @* <div data-thumb="@Product.ProductImage"> *@
+            @*     <img src="@Product.ProductImage"/> *@
+            @* </div> *@
+        @* </div> *@
+    @* </div> *@
+@* </div> *@
+
+@code {
+
+    [Parameter]
+    public ProductDto Product { get; set; }
+
+}

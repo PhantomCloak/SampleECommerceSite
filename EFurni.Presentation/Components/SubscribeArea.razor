@@ -1,0 +1,31 @@
+@namespace EFurni.Presentation.Components.Home
+
+<section class="subscribe_area section_padding">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="subscribe_area_text text-center">
+                    <h5>Join Our Newsletter</h5>
+                    <h2 style="font-weight: 500">
+                        Subscribe to get Updated
+                        with new offers
+                    </h2>
+                    <div class="row justify-content-center">
+                        <RadzenTextBox class="regular-font-text" Placeholder="Email Address" style=
+                                       "background-color: #f5f5f6;font-size:14pt;
+                                       height: 40px;"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+        private string userEmail = string.Empty;
+
+        private async void RegisterEmailSubscription()
+        {
+            await Task.Delay(5);
+        }
+    }

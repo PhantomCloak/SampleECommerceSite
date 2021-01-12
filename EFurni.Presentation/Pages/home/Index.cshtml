@@ -1,0 +1,19 @@
+﻿@page "/"
+<!doctype html>
+
+
+@await Html.PartialAsync("../Shared/PartialViews/Navbar/Navbar.cshtml")
+
+@section Scripts{
+    <partial name="PartialScripts/_PartialJavaScripts"/>
+}
+
+<component type="typeof(FeaturedList)" render-mode="ServerPrerendered"/>
+<component type="typeof(PopularList)" render-mode="ServerPrerendered" param-InitialPage="1"/>
+<component type="typeof(OfferSection)" render-mode="ServerPrerendered"/>
+<component type="typeof(BestSellersList)" render-mode="ServerPrerendered"/>
+@* <component type="typeof(SubscribeArea)" render-mode="ServerPrerendered"/> *@
+
+@await Html.PartialAsync("../Shared/PartialViews/Footer/Footer.cshtml")
+
+<!--::subscribe_area part end::-->

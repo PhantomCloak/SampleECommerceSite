@@ -1,0 +1,66 @@
+@* @using Blazored.LocalStorage *@
+@* @using EFurni.Presentation.Clients *@
+@* @using Newtonsoft.Json *@
+@* @inject LocalStorageService LocalStorageService;  *@
+@* *@
+@* @code { *@
+@*     bool rendered = false; *@
+@* *@
+@*     protected override async void OnAfterRender(bool firstRender) *@
+@*     { *@
+@*         if (!rendered) *@
+@*             if (firstRender) *@
+@*             { *@
+@*                 rendered = true; *@
+@*                  *@
+@*                  var indicator =await LocalStorageService.GetItemAsStringAsync("redMagic"); *@
+@* *@
+@*                 if (string.IsNullOrEmpty(indicator)) *@
+@*                 { *@
+@*                     indicator = Guid.NewGuid().ToString(); *@
+@*                     await LocalStorageService.SetItemAsync("redMagic",indicator); *@
+@*                 } *@
+@* *@
+@*                 ClientVariables instance = null; *@
+@*                  *@
+@*                 if (ClientStorageArray.Map.ContainsKey(indicator)) *@
+@*                 { *@
+@*                     instance = ClientStorageArray.Map[indicator]; *@
+@*                 } *@
+@*                 else *@
+@*                 { *@
+@*                     instance = new ClientVariables(); *@
+@*                     ClientStorageArray.Map.TryAdd(indicator,instance); *@
+@*                 } *@
+@*                  *@
+@*                 var props = typeof(ClientVariables).GetProperties(); *@
+@* *@
+@*                 foreach (var propertyInfo in props) *@
+@*                 { *@
+@*                     object val = propertyInfo.GetValue(instance); *@
+@*                      *@
+@*                     if(val != null) *@
+@*                         continue; *@
+@*                      *@
+@*                     var attributes = propertyInfo.GetCustomAttributes(true); *@
+@* *@
+@*                     var attribute = attributes[0] as StorageName; *@
+@* *@
+@*                     string storageName = attribute.AttributeName; *@
+@* *@
+@*                     string itemVal = await LocalStorageService.GetItemAsStringAsync(storageName); *@
+@*                      *@
+@*                     var propVal = JsonConvert.DeserializeObject(itemVal, propertyInfo.PropertyType); *@
+@*                      *@
+@*                     if (string.IsNullOrEmpty(itemVal)) *@
+@*                         continue; *@
+@*                      *@
+@*                     propertyInfo.SetValue(instance, propVal); *@
+@*                      *@
+@*                     ClientStorageArray.Map[indicator] = instance; *@
+@*                 } *@
+@*             } *@
+@*         await base.OnAfterRenderAsync(firstRender); *@
+@*     } *@
+@* *@
+@* } *@
