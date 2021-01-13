@@ -9,6 +9,7 @@ namespace EFurni.Services
 {
     internal class AuthenticationService : IAuthenticationService
     {
+        private readonly ITokenRepository _tokenRepository;
         private readonly IAccountRepository<AccountFilterParams> _accountRepository;
         private readonly ICustomerRepository<CustomerFilterParams> _customerRepository;
         private readonly ICryptographyService _cryptographyService;
@@ -16,15 +17,16 @@ namespace EFurni.Services
         public AuthenticationService(
             IAccountRepository<AccountFilterParams> accountRepository,
             ICustomerRepository<CustomerFilterParams> customerRepository,
+            ITokenRepository tokenRepository,
             ICryptographyService cryptographyService)
         {
-            // _dbContext = dbContext;
+            _tokenRepository = tokenRepository;
             _accountRepository = accountRepository;
             _customerRepository = customerRepository;
             _cryptographyService = cryptographyService;
         }
 
-        public async Task<(bool Validated,Account ValidatedUser)> ValidateUser(string userName, string password)
+        public async Task<string> LoginAsync(string userName, string password)
         {
             string hashedPassword = _cryptographyService.HashString(password, userName);
 
@@ -34,13 +36,23 @@ namespace EFurni.Services
                 AccountPassword = hashedPassword
             })).FirstOrDefault();
 
-            return account == null ? (false, null) : (true,account);
+            if (account == null)
+            {
+                return null;
+            }
+            
+            var token = await _tokenRepository.CreateTokenAsync(account.AccountId);
+
+            return token;
         }
+
         public async Task<bool> RegisterUserAsync(RegisterUserParams registerQuery)
         {
             var newAccount = new Account
-                {Email = registerQuery.Email, 
-                    Password = _cryptographyService.HashString(registerQuery.Password,registerQuery.Email)};
+            {
+                Email = registerQuery.Email,
+                Password = _cryptographyService.HashString(registerQuery.Password, registerQuery.Email)
+            };
 
             await _accountRepository.CreateAccountAsync(newAccount);
 
@@ -49,11 +61,32 @@ namespace EFurni.Services
                 Account = newAccount,
                 FirstName = registerQuery.FirstName,
                 LastName = registerQuery.LastName,
-                ProfilePictureUrl = "https://e7.pngegg.com/pngimages/109/994/png-clipart-teacher-student-college-school-education-avatars-child-face-thumbnail.png",
+                ProfilePictureUrl =
+                    "https://e7.pngegg.com/pngimages/109/994/png-clipart-teacher-student-college-school-education-avatars-child-face-thumbnail.png",
                 PhoneNumber = registerQuery.PhoneNumber,
             });
 
             return result;
+        }
+
+        public async Task<bool> AuthenticateUser(string token)
+        {
+            var actorId = await GetTokenActorIdAsync(token);
+
+            if (actorId == null || actorId <= 0 )
+                return false;
+
+            return true;
+        }
+
+        public async Task<int> GetTokenActorIdAsync(string token)
+        {
+            var actorId = await _tokenRepository.ActorIdFromToken(token);
+
+            if (actorId == null)
+                return 0;
+            
+            return int.Parse(actorId);
         }
     }
 }

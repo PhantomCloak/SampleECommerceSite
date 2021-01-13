@@ -37,24 +37,29 @@ namespace EFurni.Infrastructure.Extensions
             services.AddScoped<IBasketRepository, BasketRepository>();
 
             services.AddScoped<IAccountRepository<AccountFilterParams>, AccountRepository>();
- 
+            services.Decorate<IAccountRepository<AccountFilterParams>, CachedAccountRepository>();
+            
             services.AddScoped<IBrandRepository<BrandFilterParams>, BrandRepository>();
             
             services.AddScoped<ICategoryRepository<CategoryFilterParams>, CategoryRepository>();
             
             services.AddScoped<ICustomerRepository<CustomerFilterParams>, CustomerRepository>();
+            services.Decorate<ICustomerRepository<CustomerFilterParams>, CachedCustomerRepository>();
             
             services.AddScoped<IOrderRepository<OrderFilterParams>, OrderRepository>();
             
             services.AddScoped<IPostalServiceRepository<PostalCompanyFilterParams>, PostalServiceRepository>();
             
             services.AddScoped<IProductRepository<ProductFilterParams>, ProductRepository>();
+            services.Decorate<IProductRepository<ProductFilterParams>, CachedProductRepository>();
             
             services.AddScoped<IReviewRepository, ReviewRepository>();
             
             services.AddScoped<IStoreRepository<StoreFilterParams>,StoreRepository>();
             
             services.AddScoped<ITokenRepository,TokenRepository>();
+
+            services.AddScoped<IDistributedCacheAdapter, DistributedCacheAdapter>();
         }
     }
 }

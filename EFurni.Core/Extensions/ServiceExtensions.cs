@@ -1,5 +1,6 @@
 using System.IO;
 using EFurni.Core.Authentication;
+using EFurni.Core.AuthenticationExtension;
 using EFurni.Service.OutputDevices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

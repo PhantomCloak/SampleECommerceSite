@@ -37,8 +37,8 @@ namespace EFurni.Presentation.Clients.AuthenticationClient
         public async Task<bool> Login(string email, string password)
         {
             var loginRequest = new RestRequest(ApiRoutes.Authentication.Login, Method.POST)
-                .AddQueryParameter("userName", email)
-                .AddQueryParameter("password", password);
+                .AddQueryParameter("Username", email)
+                .AddQueryParameter("Password", password);
 
             var response = await client.ExecuteAsync<Response<string>>(loginRequest);
 

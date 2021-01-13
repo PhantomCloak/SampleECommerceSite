@@ -9,6 +9,7 @@ using EFurni.Contract.V1.Queries.Filter;
 using EFurni.Contract.V1.Queries.QueryParams;
 using EFurni.Contract.V1.Responses;
 using EFurni.Core.Authentication;
+using EFurni.Core.AuthenticationExtension;
 using EFurni.Core.Helpers;
 using EFurni.Services;
 using EFurni.Shared.DTOs;
@@ -40,7 +41,7 @@ namespace EFurni.Core.Controllers.V1
             _authenticationContext = authenticationContext;
             _uriGeneratorService = uriGeneratorService;
 
-            _authenticationContext.AttachToController(this);
+            _authenticationContext.AttachCurrentContext(this);
         }
 
         [HttpGet(ApiRoutes.Order.GetAll)]
@@ -66,7 +67,7 @@ namespace EFurni.Core.Controllers.V1
         [HttpGet(ApiRoutes.Order.Get)]
         public async Task<IActionResult> GetOrder(int orderId)
         {
-            int accountId = _authenticationContext.GetCurrentActorIdentifier();
+            int accountId = await _authenticationContext.SenderActorId();
 
             var customer = await _customerService.GetCustomerByAccountIdAsync(accountId);
 
@@ -93,9 +94,9 @@ namespace EFurni.Core.Controllers.V1
         [HttpPost(ApiRoutes.Order.Create)]
         public async Task<IActionResult> CreateOrder([FromBody]CreateOrderQuery createQuery)
         {
-            int customerId = User.GetClaim<int>(ClaimTypes.NameIdentifier);
+            int accountId = await _authenticationContext.SenderActorId();
             var queryParams = _mapper.Map<CreateOrderParams>(createQuery);
-            queryParams.AccountId = customerId;
+            queryParams.AccountId = accountId;
 
             CustomerOrderDto createdOrder;
 
@@ -116,7 +117,7 @@ namespace EFurni.Core.Controllers.V1
         [HttpDelete(ApiRoutes.Order.Delete)]
         public async Task<IActionResult> DeleteOrder(int orderId)
         {
-            int accountId = _authenticationContext.GetCurrentActorIdentifier();
+            int accountId = await _authenticationContext.SenderActorId();
 
             var customer = await _customerService.GetCustomerByAccountIdAsync(accountId);
 

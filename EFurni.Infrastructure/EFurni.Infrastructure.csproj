@@ -16,7 +16,10 @@
       <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.10" />
       <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
+      <PackageReference Include="Scrutor" Version="3.3.0" />
       <PackageReference Include="StackExchange.Redis" Version="2.2.4" />
+      <PackageReference Include="StackExchange.Redis.Extensions" Version="1.0.1" />
+      <PackageReference Include="StackExchange.Redis.Extensions.Protobuf" Version="6.3.3" />
     </ItemGroup>
 
 </Project>

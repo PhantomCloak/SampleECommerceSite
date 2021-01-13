@@ -16,8 +16,11 @@ spec:
         - name: efurni-core-container
           image: efurni.azurecr.io/efurni-core:latest
           resources:
+            requests:
+              memory: "150Mi"
+              cpu: "100m"
             limits:
-              memory: "250Mi"
-              cpu: "750m"
+              memory: "500Mi"
+              cpu: "250m"
           ports:
             - containerPort: 80

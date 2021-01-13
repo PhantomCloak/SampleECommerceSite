@@ -43,7 +43,7 @@ namespace EFurni.Infrastructure.Repositories
             return token;
         }
 
-        public async Task<string> GetTokenFromIdentifier(int identifier)
+        public async Task<string> TokenFromActorId(int identifier)
         {
             var db = _redis.GetDatabase();
 
@@ -54,13 +54,13 @@ namespace EFurni.Infrastructure.Repositories
             return id;
         }
 
-        public async Task<int> GetIdentifierFromTokenAsync(string token)
+        public async Task<string> ActorIdFromToken(string token)
         { 
             var db = _redis.GetDatabase();
 
             var key = ToServiceString(token);
             
-            var id = (int)(await db.HashGetAsync(key,"identifier"));
+            var id = (string)(await db.HashGetAsync(key,"identifier"));
 
             return id;
         }
@@ -68,7 +68,7 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<bool> DeleteTokenAsync(string token)
         {
             var db = _redis.GetDatabase();
-            int identifier = await GetIdentifierFromTokenAsync(token);
+            var identifier = await ActorIdFromToken(token);
 
             string key1 = ToServiceString(token);
             string key2 = ToServiceString(identifier.ToString());

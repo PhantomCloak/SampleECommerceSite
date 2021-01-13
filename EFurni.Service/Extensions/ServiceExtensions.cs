@@ -24,9 +24,6 @@ namespace EFurni.Service.Extensions
             services.AddScoped<IZipDistanceService, ZipDistanceService>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            services.AddScoped<ITokenService, TokenService>();
-            services.Decorate<ITokenService, CachedTokenService>();
-
             services.AddScoped<ISummaryService, SummaryService>();
             services.Decorate<ISummaryService, CachedSummaryCache>();
 

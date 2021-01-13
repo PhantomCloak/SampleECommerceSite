@@ -3,6 +3,7 @@ using AutoMapper;
 using EFurni.Contract.V1;
 using EFurni.Contract.V1.Queries;
 using EFurni.Contract.V1.Queries.QueryParams;
+using EFurni.Contract.V1.Queries.Validation;
 using EFurni.Contract.V1.Responses;
 using EFurni.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -14,43 +15,26 @@ namespace EFurni.Core.Controllers.V1
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authenticationService;
-        private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
 
         public AuthenticationController(
             IAuthenticationService authenticationService,
-            ITokenService tokenService,
             IMapper mapper)
         {
             _authenticationService = authenticationService;
             _mapper = mapper;
-            _tokenService = tokenService;
         }
 
         [AllowAnonymous]
         [HttpPost(ApiRoutes.Authentication.Login)]
-        public async Task<IActionResult> Login(string userName,string password)
+        public async Task<IActionResult> Login([FromQuery] LoginQuery loginQuery)
         {
-            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
-            {
-                return Unauthorized(new Response<string>("The user name or password is incorrect."));
-            }
+            var token = await _authenticationService.LoginAsync(loginQuery.Username,loginQuery.Password);
 
-            var (validated, validatedUser) = await _authenticationService.ValidateUser(userName,password);
-
-            if (!validated)
+            if (string.IsNullOrEmpty(token))
             {
                 return Unauthorized(new Response<string>("The specified account does not exist."));
             }
-
-            string oldToken = await _tokenService.GetAccountTokenAsync(validatedUser);
-
-            if (!string.IsNullOrEmpty(oldToken))
-            {
-                await _tokenService.DeleteTokenAsync(oldToken);
-            }
-
-            string token = await _tokenService.CreateTokenAsync(validatedUser);
 
             return Ok(new Response<string>(token));
         }

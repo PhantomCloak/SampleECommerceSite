@@ -6,6 +6,7 @@ using EFurni.Contract.V1;
 using EFurni.Contract.V1.Queries.Create;
 using EFurni.Contract.V1.Queries.Filter;
 using EFurni.Contract.V1.Responses;
+using EFurni.Core.AuthenticationExtension;
 using EFurni.Services;
 using EFurni.Shared.DTOs;
 using EFurni.Shared.Models;
@@ -19,11 +20,15 @@ namespace EFurni.Core.Controllers.V1
     {
         private readonly IProductReviewService _productReviewService;
         private readonly IMapper _mapper;
+        private readonly IAuthenticationContext _authenticationContext;
         
-        public ProductReviewController(IProductReviewService productReviewService, IMapper mapper)
+        public ProductReviewController(IProductReviewService productReviewService, IMapper mapper, IAuthenticationContext authenticationContext)
         {
             _productReviewService = productReviewService;
             _mapper = mapper;
+            _authenticationContext = authenticationContext;
+            
+            _authenticationContext.AttachCurrentContext(this);
         }
         
         [AllowAnonymous]
@@ -39,8 +44,8 @@ namespace EFurni.Core.Controllers.V1
         [HttpPost(ApiRoutes.ProductReview.Create)]
         public async Task<IActionResult> CreateReview(int productId,[FromQuery] CreateProductReviewQuery createQuery)
         {
-            int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier).Value,out var senderAccountId);
-
+            var senderAccountId = await _authenticationContext.SenderActorId();
+            
             var createProductParams = _mapper.Map<CreateProductReviewParams>(createQuery);
             createProductParams.AuthorAccountId = senderAccountId;
             createProductParams.ProductId = productId;

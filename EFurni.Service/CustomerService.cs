@@ -37,10 +37,7 @@ namespace EFurni.Services
 
         public async Task<CustomerDto> GetCustomerByAccountIdAsync(int accountId)
         {
-            var customer = (await _customerRepository.GetAllCustomersAsync(new CustomerFilterParams()
-            {
-                AccountIds = new []{accountId}
-            }, new PaginationParams {PageNumber = 1,PageSize = 1})).FirstOrDefault();
+            var customer = await _customerRepository.GetCustomerByAccountId(accountId);
 
             return _mapper.Map<CustomerDto>(customer);
         }

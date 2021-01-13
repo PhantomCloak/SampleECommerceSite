@@ -6,7 +6,9 @@ namespace EFurni.Services
 {
     public interface IAuthenticationService
     {
-        Task<(bool Validated,Account ValidatedUser)> ValidateUser(string userName,string password);
+        Task<string> LoginAsync(string userName,string password);
         Task<bool> RegisterUserAsync(RegisterUserParams registerQuery);
+        Task<bool> AuthenticateUser(string token);
+        Task<int> GetTokenActorIdAsync(string token);
     }
 }

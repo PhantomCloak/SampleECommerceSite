@@ -90,7 +90,15 @@ else
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        alreadyLoggedIn = (await CustomerClient.GetSelfAsync()) != null;
+        var self= await CustomerClient.GetSelfAsync();
+        if (self == null)
+        {
+            alreadyLoggedIn = false;
+        }
+        else
+        {
+            alreadyLoggedIn = true;
+        }
         StateHasChanged();
 
         LoadingComplated = true;
