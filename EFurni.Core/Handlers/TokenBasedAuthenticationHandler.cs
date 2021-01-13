@@ -26,7 +26,7 @@ namespace EFurni.Core.Handlers
         {
             if (!Request.Headers.ContainsKey("Authorization"))
             {
-                return AuthenticateResult.Fail("Token header was not found");
+                return AuthenticateResult.NoResult();
             }
 
             string authToken = Request.Headers["Authorization"];

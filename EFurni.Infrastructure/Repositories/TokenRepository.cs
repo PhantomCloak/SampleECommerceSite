@@ -1,88 +1,63 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using StackExchange.Redis;
 
 namespace EFurni.Infrastructure.Repositories
 {
     internal class TokenRepository : ITokenRepository
     {
-        private readonly IConnectionMultiplexer _redis;
+        private readonly IDistributedCacheAdapter _cacheAdapter;
         private readonly IConfiguration _configuration;
 
-        public TokenRepository(IConnectionMultiplexer redis, IConfiguration configuration)
+        public TokenRepository(
+            IDistributedCacheAdapter cacheAdapter,
+            IConfiguration configuration)
         {
-            _redis = redis;
             _configuration = configuration;
+            _cacheAdapter = cacheAdapter;
         }
         
-        public async Task<string> CreateTokenAsync(int issuedIdentifier)
+        public async Task<string> CreateTokenAsync(int actorId)
         {
-            var db = _redis.GetDatabase();
-
             string token = Guid.NewGuid().ToString();
-            var identifier = issuedIdentifier.ToString();
-            
-            var expiration = TimeSpan.FromMinutes(double.Parse(_configuration["TokenService:TokenExpireInMinutes"]));
+            var expiration = TimeSpan.FromMinutes(int.Parse(_configuration["TokenService:TokenExpireInMinutes"]));
 
-            await db.HashSetAsync(ToServiceString(token),
-                new[]
-                {
-                    new HashEntry("identifier",issuedIdentifier), 
-                });
+            var cacheIdFromTokenKey = $"token:actorId:{token}";
+            var cacheTokenFromIdKey = $"token:actorToken:{actorId}";
 
-            await db.HashSetAsync(ToServiceString(identifier),
-                new[]
-                {
-                    new HashEntry("token",token), 
-                });
-
-            db.KeyExpire(ToServiceString(token),expiration);
-            db.KeyExpire(ToServiceString(identifier),expiration);
+            await _cacheAdapter.SetInt(cacheIdFromTokenKey, actorId,expiration);
+            await _cacheAdapter.SetString(cacheTokenFromIdKey, token,expiration);
             
             return token;
         }
 
-        public async Task<string> TokenFromActorId(int identifier)
+        public async Task<string> TokenFromActorId(int actorId)
         {
-            var db = _redis.GetDatabase();
-
-            var key = ToServiceString(identifier.ToString());
+            var cacheTokenFromIdKey = $"token:actorToken:{actorId}";
+            var token = await _cacheAdapter.GetString(cacheTokenFromIdKey);
             
-            var id = (string)(await db.HashGetAsync(key,"token"));
-
-            return id;
+            return token;
         }
 
         public async Task<string> ActorIdFromToken(string token)
         { 
-            var db = _redis.GetDatabase();
+            var cacheIdFromTokenKey = $"token:actorId:{token}";
+            var actorId = await _cacheAdapter.GetString(cacheIdFromTokenKey);
 
-            var key = ToServiceString(token);
-            
-            var id = (string)(await db.HashGetAsync(key,"identifier"));
-
-            return id;
+            return actorId;
         }
 
         public async Task<bool> DeleteTokenAsync(string token)
         {
-            var db = _redis.GetDatabase();
-            var identifier = await ActorIdFromToken(token);
+            var actorId = ActorIdFromToken(token);
+            
+            var cacheIdFromTokenKey = $"token:actorId:{token}";
+            var cacheTokenFromIdKey = $"token:actorToken:{actorId}";
 
-            string key1 = ToServiceString(token);
-            string key2 = ToServiceString(identifier.ToString());
-
-            db.KeyDelete(key1);
-            db.KeyDelete(key2);
-
+            await _cacheAdapter.DeleteAsync(cacheIdFromTokenKey);
+            await _cacheAdapter.DeleteAsync(cacheTokenFromIdKey);
+            
             return true;
-        }
-
-        
-        private string ToServiceString(string str)
-        {
-            return "token-service:" + str;
         }
     }
 }

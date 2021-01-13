@@ -28,7 +28,7 @@ namespace EFurni.Presentation.Clients
             var createOrderReq = new RestRequest(ApiRoutes.Order.Create, Method.POST);
             var str = await _authenticationClient.AuthenticationToken();
             Console.WriteLine(str);
-            // createOrderReq.AddParameter("Authorization",str,ParameterType.HttpHeader);
+            
             createOrderReq.AddHeader("Authorization", str);
             
             createOrderReq.AddJsonBody(createOrderQuery);
