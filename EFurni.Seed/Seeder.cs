@@ -14,13 +14,13 @@ namespace EFurni.Seed
 
     public class Seeder
     {
-        public static MySqlConnection? DbConnection { get; set; }
+        // public static MySqlConnection? DbConnection { get; set; }
 
         public static void WipeTable(Type modelType)
         {
             string tableName = GetModelTableName<string>(modelType.Name);
-            MySqlCommand cmd = new MySqlCommand($"DELETE FROM {tableName}", DbConnection);
-            cmd.ExecuteNonQuery();
+            // MySqlCommand cmd = new MySqlCommand($"DELETE FROM {tableName}", DbConnection);
+            // cmd.ExecuteNonQuery();
         }
 
         private static string GetModelTableName<T>(T model)
@@ -128,14 +128,14 @@ namespace EFurni.Seed
                 }
 
 
-                var cmd = new MySqlCommand($"INSERT INTO {tableName} VALUES({paramStr.ToString()});", DbConnection);
-
-                for (int i = 0; i < tableValues.Length; i++)
-                {
-                    cmd.Parameters.AddWithValue(i.ToString(), tableValues[i].ToString());
-                }
-
-                cmd.ExecuteNonQuery();
+                // var cmd = new MySqlCommand($"INSERT INTO {tableName} VALUES({paramStr.ToString()});", DbConnection);
+                //
+                // for (int i = 0; i < tableValues.Length; i++)
+                // {
+                //     cmd.Parameters.AddWithValue(i.ToString(), tableValues[i].ToString());
+                // }
+                //
+                // cmd.ExecuteNonQuery();
             }
         }
     }

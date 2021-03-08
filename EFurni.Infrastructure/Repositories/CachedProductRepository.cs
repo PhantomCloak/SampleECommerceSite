@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EFurni.Contract.V1.Queries.QueryParams;
+using EFurni.Infrastructure.Extensions;
 using EFurni.Infrastructure.OutputDevices;
 using EFurni.Shared.Models;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
@@ -13,18 +15,18 @@ namespace EFurni.Infrastructure.Repositories
 {
     public class CachedProductRepository : IProductRepository<ProductFilterParams>
     {
-        private readonly IDistributedCacheAdapter _distributedCacheAdapter;
+        private readonly IConfiguration _configuration;
+        private readonly IDistributedCache _distributedCache;
         private readonly IProductRepository<ProductFilterParams> _productRepository;
-        private readonly TimeSpan _defaultTtl;
 
         public CachedProductRepository(
             IProductRepository<ProductFilterParams> productRepository,
-            IDistributedCacheAdapter distributedCacheAdapter,
+            IDistributedCache distributedCache,
             IConfiguration configuration)
         {
-            _distributedCacheAdapter = distributedCacheAdapter;
+            _configuration = configuration;
+            _distributedCache = distributedCache;
             _productRepository = productRepository;
-            _defaultTtl = TimeSpan.FromMinutes(int.Parse(configuration["CacheProfiles:ProductTtl"]));
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync(
@@ -39,12 +41,16 @@ namespace EFurni.Infrastructure.Repositories
                 {
                     var cacheKey = $"productPlainPage:{paginationParams.PageNumber}:{paginationParams.PageSize}";
 
-                    var result = await _distributedCacheAdapter.GetAsync<IEnumerable<Product>>(cacheKey);
+                    var result = await _distributedCache.GetAsync<IEnumerable<Product>>(cacheKey);
 
                     if (result == null)
                     {
                         result = await _productRepository.GetAllProductsAsync(null, paginationParams);
-                        await _distributedCacheAdapter.SetAsync(cacheKey, result,_defaultTtl);
+                        var cacheOptions = _distributedCache
+                            .CacheOptions()
+                            .FromConfiguration(_configuration, "ProductCache");
+                        
+                        await _distributedCache.SetAsync(cacheKey, result,cacheOptions);
                     }
 
                     return result;
@@ -60,12 +66,16 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<Product> GetProductByIdAsync(int productId)
         {
             var cacheKey = $"product:{productId}";
-            var product = await _distributedCacheAdapter.GetAsync<Product>(cacheKey);
+            var product = await _distributedCache.GetAsync<Product>(cacheKey);
 
             if (product == null)
             {
                 product = await _productRepository.GetProductByIdAsync(productId);
-                await _distributedCacheAdapter.SetAsync(cacheKey, product, _defaultTtl);
+                var cacheOptions = _distributedCache
+                    .CacheOptions()
+                    .FromConfiguration(_configuration, "ProductCache");
+                
+                await _distributedCache.SetAsync(cacheKey, product,cacheOptions);
             }
 
             return product;
@@ -74,7 +84,7 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<bool> UpdateProductAsync(Product productToUpdate)
         {
             var cacheKey = $"product:{productToUpdate.ProductId}";
-            await _distributedCacheAdapter.DeleteAsync(cacheKey);
+            await _distributedCache.RemoveAsync(cacheKey);
 
             return await _productRepository.UpdateProductAsync(productToUpdate);
         }
@@ -82,9 +92,14 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<bool> DeleteProductAsync(int productId)
         {
             var cacheKey = $"product:{productId}";
-            await _distributedCacheAdapter.DeleteAsync(cacheKey);
+            await _distributedCache.RemoveAsync(cacheKey);
 
             return await _productRepository.DeleteProductAsync(productId);
+        }
+
+        public Task DisposeEntities(IEnumerable<Product> entities)
+        {
+            return _productRepository.DisposeEntities(entities);
         }
 
         public void AttachOutputDevice(IRepositoryQueryOutputDevice repositoryQueryOutputDevice) =>

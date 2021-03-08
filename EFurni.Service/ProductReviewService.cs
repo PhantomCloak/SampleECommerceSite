@@ -45,15 +45,15 @@ namespace EFurni.Services
                 throw new Exception("Specified product was not found");
             }
 
-            var productReview = new CustomerReview()
+            var productReview = new CustomerReview
             {
-                Customer = customer,
+                CustomerId = customer.CustomerId,
                 CustomerComment = createReviewParams.ReviewText,
                 CustomerRating = createReviewParams.Rating
             };
 
             product.CustomerReview.Add(productReview);
-
+    
             await _productRepository.UpdateProductAsync(product);
 
             return _mapper.Map<CustomerReviewDto>(productReview);

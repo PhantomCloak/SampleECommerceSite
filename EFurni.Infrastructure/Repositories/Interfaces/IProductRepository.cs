@@ -16,6 +16,7 @@ namespace EFurni.Infrastructure.Repositories
         Task<Product> GetProductByIdAsync(int productId);
         Task<bool> UpdateProductAsync(Product productToUpdate);
         Task<bool> DeleteProductAsync(int productId);
+        Task DisposeEntities(IEnumerable<Product> entities);
         void AttachOutputDevice(IRepositoryQueryOutputDevice repositoryQueryOutputDevice);
     }
 }

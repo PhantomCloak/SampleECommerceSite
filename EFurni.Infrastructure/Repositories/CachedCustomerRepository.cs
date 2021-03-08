@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EFurni.Contract.V1.Queries.QueryParams;
+using EFurni.Infrastructure.Extensions;
 using EFurni.Shared.Models;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 
 namespace EFurni.Infrastructure.Repositories
@@ -11,17 +13,17 @@ namespace EFurni.Infrastructure.Repositories
     public class CachedCustomerRepository : ICustomerRepository<CustomerFilterParams>
     {
         private readonly ICustomerRepository<CustomerFilterParams> _customerRepository;
-        private readonly IDistributedCacheAdapter _distributedCacheAdapter;
-        private readonly TimeSpan _defaultTtl;
+        private readonly IConfiguration _configuration;
+        private readonly IDistributedCache _distributedCache;
         
         public CachedCustomerRepository(
             ICustomerRepository<CustomerFilterParams> customerRepository,
             IConfiguration configuration,
-            IDistributedCacheAdapter distributedCacheAdapter)
+            IDistributedCache distributedCache)
         {
             _customerRepository = customerRepository;
-            _distributedCacheAdapter = distributedCacheAdapter;
-            _defaultTtl = TimeSpan.FromMinutes(int.Parse(configuration["CacheProfiles:CustomerTtl"]));
+            _configuration = configuration;
+            _distributedCache = distributedCache;
         }
 
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync(CustomerFilterParams filterParams,
@@ -34,12 +36,17 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<Customer> GetCustomerByIdAsync(int customerId)
         {
             var cacheKey = $"customer:{customerId}";
-            var customer = await _distributedCacheAdapter.GetAsync<Customer>(cacheKey);
+            var customer = await _distributedCache.GetAsync<Customer>(cacheKey);
 
             if (customer == null)
             {
                 customer = await _customerRepository.GetCustomerByIdAsync(customerId);
-                await _distributedCacheAdapter.SetAsync(cacheKey, customer, _defaultTtl);
+                
+                var cacheOptions = _distributedCache
+                    .CacheOptions()
+                    .FromConfiguration(_configuration, "CustomerCache");
+                
+                await _distributedCache.SetAsync(cacheKey, customer,cacheOptions);
             }
 
             return customer;
@@ -48,12 +55,17 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<Customer> GetCustomerByAccountId(int accountId)
         {
             var cacheKey = $"customer:account:{accountId}";
-            var customer = await _distributedCacheAdapter.GetAsync<Customer>(cacheKey);
+            var customer = await _distributedCache.GetAsync<Customer>(cacheKey);
 
             if (customer == null)
             {
+                var cacheOptions = _distributedCache
+                    .CacheOptions()
+                    .FromConfiguration(_configuration, "CustomerCache");
+
                 customer = await _customerRepository.GetCustomerByAccountId(accountId);
-                await _distributedCacheAdapter.SetAsync(cacheKey, customer, _defaultTtl);
+                
+                await _distributedCache.SetAsync(cacheKey, customer,cacheOptions);
             }
 
             return customer;
@@ -64,8 +76,8 @@ namespace EFurni.Infrastructure.Repositories
             var customerCacheKey = $"customer:account:{customerToUpdate.CustomerId}";
             var customerFromAccountCacheKey = $"customer:account:{customerToUpdate.AccountId}";
 
-            await _distributedCacheAdapter.DeleteAsync(customerCacheKey);
-            await _distributedCacheAdapter.DeleteAsync(customerFromAccountCacheKey);
+            await _distributedCache.RemoveAsync(customerCacheKey);
+            await _distributedCache.RemoveAsync(customerFromAccountCacheKey);
 
             return await _customerRepository.DeleteCustomerAsync(customerToUpdate.CustomerId);
         }
@@ -73,7 +85,7 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<bool> DeleteCustomerAsync(int customerId)
         {
             var customerCacheKey = $"customer:account:{customerId}";
-            await _distributedCacheAdapter.DeleteAsync(customerCacheKey);
+            await _distributedCache.RemoveAsync(customerCacheKey);
             
             return await _customerRepository.DeleteCustomerAsync(customerId);
         }
@@ -87,5 +99,6 @@ namespace EFurni.Infrastructure.Repositories
         {
             return _customerRepository.AddSortOnQuery(sorter, query);
         }
+        
     }
 }

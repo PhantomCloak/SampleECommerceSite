@@ -4,10 +4,9 @@ using System.Data;
 using Bogus;
 using EFurni.Seed.Seeders.SeederShared;
 using EFurni.Shared.Models;
-using MySql.Data.MySqlClient;
 
 // ReSharper disable All
-
+//Don't use that class
 namespace EFurni.Seed
 {
     internal class Program
@@ -56,16 +55,15 @@ namespace EFurni.Seed
 
         private static void Seed()
         {
-            var dbConnection =
-                new MySqlConnection(connectionString);
+            // var dbConnection =
+                // new MySqlConnection(connectionString);
+            // dbConnection.Open();
+            // Seeder.DbConnection = dbConnection;
             
-            dbConnection.Open();
-            Seeder.DbConnection = dbConnection;
-            
-            if (dbConnection.State != ConnectionState.Open)
-            {
-                return;
-            }
+            // if (dbConnection.State != ConnectionState.Open)
+            // {
+            //     return;
+            // }
             Seeder.WipeTable(typeof(StoreAddress));
             Seeder.WipeTable(typeof(Stock));
             Seeder.WipeTable(typeof(Store));
@@ -237,7 +235,7 @@ namespace EFurni.Seed
 
                 var fakeComments = new Faker<PostalService>()
                     .RuleFor(s => s.ServiceId, f => postalServiceCounter++)
-                    .RuleFor(s => s.PostalServiceName, f => f.Company.CompanyName())
+                    // .RuleFor(s => s.PostalServiceName, f => f.Company.CompanyName())
                     .RuleFor(s => s.Price, f => f.Random.Double(25, 100));
 
                 return fakeComments;

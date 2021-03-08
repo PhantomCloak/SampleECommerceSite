@@ -105,9 +105,9 @@ namespace EFurni.Infrastructure.Queries
             IEnumerable<string> destinationPostalCodes)
         {
             string rawSql = $@"SELECT postal_code as PostalCode,st_distancesphere(
-    (SELECT  ST_MakePoint(longitude,latitude) as distance1 FROM locations.public.neighborhoods WHERE postal_code= '{sourcePostalCode}' GROUP BY distance1 LIMIT 1),
+    (SELECT  ST_MakePoint(longitude,latitude) as distance1 FROM location.public.neighborhoods WHERE postal_code= '{sourcePostalCode}' GROUP BY distance1 LIMIT 1),
     st_makepoint(longitude,latitude)) as DistanceInMeter
-    FROM locations.public.neighborhoods WHERE {string.Join(" OR ", destinationPostalCodes.Select(x => "postal_code='" + x + "'"))} GROUP BY postal_code,DistanceInMeter";
+    FROM location.public.neighborhoods WHERE {string.Join(" OR ", destinationPostalCodes.Select(x => "postal_code='" + x + "'"))} GROUP BY postal_code,DistanceInMeter";
             
             var response = await _locationDbContext.ZipCodeLocationPairs.FromSqlRaw(rawSql).AsNoTracking().ToArrayAsync();
 

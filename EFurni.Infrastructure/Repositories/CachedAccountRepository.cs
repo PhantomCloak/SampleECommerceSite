@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EFurni.Contract.V1.Queries.QueryParams;
+using EFurni.Infrastructure.Extensions;
 using EFurni.Shared.Models;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 
 namespace EFurni.Infrastructure.Repositories
@@ -12,17 +14,17 @@ namespace EFurni.Infrastructure.Repositories
     public class CachedAccountRepository : IAccountRepository<AccountFilterParams>
     {
         private readonly IAccountRepository<AccountFilterParams> _accountRepository;
-        private IDistributedCacheAdapter _distributedCache;
-        private readonly TimeSpan _defaultTtl;
+        private readonly IConfiguration _configuration;
+        private IDistributedCache _distributedCache;
 
         public CachedAccountRepository(
             IAccountRepository<AccountFilterParams> accountRepository,
             IConfiguration configuration,
-            IDistributedCacheAdapter distributedCache)
+            IDistributedCache distributedCache)
         {
             _accountRepository = accountRepository;
+            _configuration = configuration;
             _distributedCache = distributedCache;
-            _defaultTtl = TimeSpan.FromMinutes(int.Parse(configuration["CacheProfiles:AccountTtl"]));
         }
 
         public Task<IEnumerable<Account>> GetAllAccountsAsync(
@@ -42,7 +44,11 @@ namespace EFurni.Infrastructure.Repositories
             {
                 account = await _accountRepository.GetAccountByIdAsync(accountId);
 
-                await _distributedCache.SetAsync(cacheKey, account, _defaultTtl);
+                var cacheOptions = _distributedCache
+                    .CacheOptions()
+                    .FromConfiguration(_configuration, "AccountCache");
+                
+                await _distributedCache.SetAsync(cacheKey, account,cacheOptions);
             }
 
             return account;
@@ -51,15 +57,15 @@ namespace EFurni.Infrastructure.Repositories
         public async Task<bool> UpdateAccountAsync(Account accountToUpdate)
         {
             var cacheKey = $"account:{accountToUpdate.AccountId}";
-            await _distributedCache.DeleteAsync(cacheKey);
-            
+            await _distributedCache.RemoveAsync(cacheKey);
+
             return await _accountRepository.UpdateAccountAsync(accountToUpdate);
         }
 
         public async Task<bool> DeleteAccountAsync(int accountId)
         {
             var cacheKey = $"account:{accountId}";
-            await _distributedCache.DeleteAsync(cacheKey);
+            await _distributedCache.RemoveAsync(cacheKey);
 
             return await _accountRepository.DeleteAccountAsync(accountId);
         }

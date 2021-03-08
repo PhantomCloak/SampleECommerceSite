@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using EFurni.Core.Authentication;
 using EFurni.Core.AuthenticationExtension;
@@ -22,10 +23,20 @@ namespace EFurni.Core.Extensions
             Configuration = builder.Build();
         }
 
-        public static void AddCacheServices(this IServiceCollection services)
+        public static bool AddCacheServices(this IServiceCollection services)
         {
-            services.AddMemoryCache();
-            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration["Redis:ConnectionString"]));
+            try
+            {
+                services.AddMemoryCache();
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration["Redis:ConnectionString"]));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+
+            return true;
         }
 
         public static void AddSwagger(this IServiceCollection services)

@@ -63,16 +63,6 @@ namespace EFurni.Infrastructure.Repositories
             return result > 0;
         }
 
-
-        private static void DisplayStates(IEnumerable<EntityEntry> entries)
-        {
-            foreach (var entry in entries)
-            {
-                Console.WriteLine($"Entity: {entry.Entity.GetType().Name},State: {entry.State.ToString()} ");
-            }
-        }
-
-
         public async Task<Product> GetProductByIdAsync(int productId)
         {
             return await _dbContext.Product
@@ -104,6 +94,34 @@ namespace EFurni.Infrastructure.Repositories
 
             var result = await _dbContext.SaveChangesAsync();
             return result > 0;
+        }
+
+        public Task DisposeEntities(IEnumerable<Product> entities)
+        {
+            foreach (var entity in entities)
+            {
+                _dbContext.Entry(entity).State = EntityState.Detached;
+
+                foreach (var review in entity.CustomerReview)
+                {
+                    _dbContext.Entry(review).State = EntityState.Detached;
+                    _dbContext.Entry(review.Customer).State = EntityState.Detached;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public async Task<Product> HackProduct(int productId)
+        {
+            return await _dbContext.Product
+                .Include(t => t.Brand)
+                .Include(t => t.Category)
+                .Include(t => t.ProductSalesStatistic)
+                .Include(x => x.CustomerReview)
+                .ThenInclude(x => x.Customer)
+                .Where(x => x.ProductId == productId).AsNoTracking()
+                .SingleOrDefaultAsync();
         }
 
         public void AttachOutputDevice(IRepositoryQueryOutputDevice repositoryQueryOutput)

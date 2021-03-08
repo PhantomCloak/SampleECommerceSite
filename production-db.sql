@@ -1,3 +1,18 @@
+
+CREATE SEQUENCE account_seq START 1000;
+CREATE SEQUENCE brand_seq START 1000;
+CREATE SEQUENCE category_seq START 1000;
+CREATE SEQUENCE customer_seq START 1000;
+CREATE SEQUENCE customer_basket_seq START 1000;
+CREATE SEQUENCE customer_order_seq START 1000;
+CREATE SEQUENCE customer_order_address_id_seq START 1000;
+CREATE SEQUENCE product_seq START 1000;
+CREATE SEQUENCE customer_review_review_id_seq START 1000;
+CREATE SEQUENCE store_seq START 1000;
+CREATE SEQUENCE customer_order_item_seq START 1000;
+CREATE SEQUENCE stock_seq START 1000;
+
+
 create table account
 (
 	account_id integer default nextval('account_seq'::regclass) not null
@@ -9,7 +24,6 @@ create table account
 	deleted_at date
 );
 
-alter table account owner to service;
 
 create table brand
 (
@@ -19,7 +33,7 @@ create table brand
 	brand_name varchar(64) not null
 );
 
-alter table brand owner to service;
+
 
 create table category
 (
@@ -29,7 +43,7 @@ create table category
 	category_name varchar(32) not null
 );
 
-alter table category owner to service;
+
 
 create table customer
 (
@@ -48,7 +62,6 @@ create table customer
 	phone_number varchar(48)
 );
 
-alter table customer owner to service;
 
 create table customer_basket
 (
@@ -63,7 +76,6 @@ create table customer_basket
 				on delete cascade
 );
 
-alter table customer_basket owner to service;
 
 create table postal_service
 (
@@ -75,7 +87,7 @@ create table postal_service
 	avg_delivery_day integer
 );
 
-alter table postal_service owner to service;
+
 
 create table customer_order
 (
@@ -103,7 +115,6 @@ create table customer_order
 	cargo_price double precision not null
 );
 
-alter table customer_order owner to service;
 
 create index idx_customer_order_customer_id
 	on customer_order (customer_id);
@@ -128,7 +139,7 @@ create table customer_order_address
 	address_text_secondary text
 );
 
-alter table customer_order_address owner to service;
+
 
 create table product
 (
@@ -156,7 +167,7 @@ create table product
 	listed smallint not null
 );
 
-alter table product owner to service;
+
 
 create table basket_item
 (
@@ -174,7 +185,7 @@ create table basket_item
 	amount integer not null
 );
 
-alter table basket_item owner to service;
+
 
 create table customer_review
 (
@@ -194,7 +205,7 @@ create table customer_review
 	reply_review_id integer
 );
 
-alter table customer_review owner to service;
+
 
 create index idx_customer_review_customer_id
 	on customer_review (customer_id);
@@ -222,7 +233,7 @@ create table product_sales_statistic
 	date_added date not null
 );
 
-alter table product_sales_statistic owner to service;
+
 
 create table store
 (
@@ -257,7 +268,6 @@ create table customer_order_item
 				on delete set null
 );
 
-alter table customer_order_item owner to service;
 
 create table stock
 (
@@ -275,7 +285,7 @@ create table stock
 	quantity integer not null
 );
 
-alter table stock owner to service;
+
 
 create index idx_stock_product_id
 	on stock (product_id);
@@ -297,7 +307,6 @@ create table store_address
 	address_text_secondary text
 );
 
-alter table store_address owner to service;
 
 create index idx_store_address_zip_code
 	on store_address (zip_code);
@@ -313,5 +322,5 @@ create table store_sales_statistic
 	item_sold integer not null
 );
 
-alter table store_sales_statistic owner to service;
+
 

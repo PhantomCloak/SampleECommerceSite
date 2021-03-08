@@ -59,7 +59,10 @@ namespace EFurni.Infrastructure.Extensions
             
             services.AddScoped<ITokenRepository,TokenRepository>();
 
-            services.AddScoped<IDistributedCacheAdapter, DistributedCacheAdapter>();
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = Configuration["Redis:ConnectionString"];
+            });
         }
     }
 }

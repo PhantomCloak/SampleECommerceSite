@@ -35,6 +35,9 @@ namespace EFurni.Presentation.Extensions.ButtonController
 
         public string Get(string setting)
         {
+            if (!settingMap.ContainsKey(setting))
+                return string.Empty;
+
             return settingMap[setting].Get();
         }
 
@@ -69,10 +72,12 @@ namespace EFurni.Presentation.Extensions.ButtonController
 
         private string _lastTriggeredButton;
         private bool radioStyl;
-
-        public ButtonController(bool radioStyle = true)
+        private bool _nodoubeClick;
+        
+        public ButtonController(bool radioStyle = true,bool noDoubleClick = false)
         {
             radioStyl = radioStyle;
+            _nodoubeClick = noDoubleClick;
         }
 
         public ButtonStateStorage this[string buttonName] => _buttonStates[buttonName];
@@ -99,6 +104,9 @@ namespace EFurni.Presentation.Extensions.ButtonController
 
             if (name == _lastTriggeredButton)
             {
+                if(_nodoubeClick)
+                    return;
+                
                 _buttonStates[_lastTriggeredButton].TriggerAll();
                 _lastTriggeredButton = null;
                 return;

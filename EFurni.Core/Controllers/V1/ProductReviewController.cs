@@ -36,7 +36,7 @@ namespace EFurni.Core.Controllers.V1
         public async Task<IActionResult> GetReviews(int productId)
         {
             var reviews = await _productReviewService.GetReviewsAsync(productId);
-            
+
             return Ok(new Response<IEnumerable<CustomerReviewDto>>(reviews));
         }
 
