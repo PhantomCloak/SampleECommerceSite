@@ -3,6 +3,7 @@
 # Summary
 Example of furniture themed e-commerce backend / frontend written with Asp Net Core  and Blazor Web Assembly
 
+### Preview: [Here](http://efurni.phantom-dev.com/)
 # Motivation
 Creating an example of three tier monolith within e-commerce concept that implements essential features of it's business such as order, checkout, basket, etc 
 project's goals are being example of following topics
@@ -44,11 +45,11 @@ EF Core's conventions which is preventable with manuel mapping but I think this 
 
 * Lack of unit and integration test
 
-# How to boot up
+# How to setup
 
 ## Linux
 
-Just run the ./bootup.sh
+Just run the ./bootup.sh external dependencies not included
 
 ## Windows
 
@@ -59,6 +60,21 @@ Just run the ./bootup.sh
 * .NET Core 5
 
 ### Post installation
-After installing dependencies there will not much work to do just edit connection strings and users as your preferance and ready to go
-further. 
+After installing dependencies, edit the connection string in config file and ready to go.
+## Azure
+Azure scripts allows to automate independent deployment of backend and frontend  also external dependencies as well (free tier compatible).
+
+####Scripts for deployment
+* DeployBackend.sh
+* DeployFrontend.sh
+* DeployPostgres.sh
+* DeployRedis.sh
+
+####Scripts for creating AKS cluster and other resources (in order)
+
+* CreateServicePrincipal.sh
+* CreateAKSCluster.sh
+
+## Sources
+Base Theme: [Source](https://colorlib.com/wp/template/aranoz/)
 
