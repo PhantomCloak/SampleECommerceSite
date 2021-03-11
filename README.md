@@ -64,13 +64,13 @@ After installing dependencies, edit the connection string in config file and rea
 ## Azure
 Azure scripts allows to automate independent deployment of backend and frontend  also external dependencies as well (free tier compatible).
 
-####Scripts for deployment
+#### Scripts for deployment
 * DeployBackend.sh
 * DeployFrontend.sh
 * DeployPostgres.sh
 * DeployRedis.sh
 
-####Scripts for creating AKS cluster and other resources (in order)
+#### Scripts for creating AKS cluster and other resources (in order)
 
 * CreateServicePrincipal.sh
 * CreateAKSCluster.sh
